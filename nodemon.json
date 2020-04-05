@@ -9,5 +9,8 @@
     "src"
   ],
   "exec": "npm run eslint && ts-node src/server.ts",
-  "ext": "ts"
+  "ext": "ts",
+  "env": {
+    "AWS_REGION": "eu-west-1"
+}
 }
