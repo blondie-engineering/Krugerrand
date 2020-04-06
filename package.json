@@ -1,18 +1,7 @@
 {
   "name": "express-typescript-boilerplate",
   "version": "1.0.0",
-  "description": "A minimalist TypeScript-Express boilerplate",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/sidhantpanda/express-typescript-boilerplate.git"
-  },
-  "keywords": [
-    "TypeScript",
-    "express",
-    "nodejs",
-    "boilerplate",
-    "eslint"
-  ],
+  "description": "Krugerrand quantum backend",
   "author": "Sidhant Panda",
   "main": "dist/index.js",
   "scripts": {
