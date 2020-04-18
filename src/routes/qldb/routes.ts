@@ -8,7 +8,7 @@ router.get('/connectLedger', QldbController.connectLedger);
 router.get('/createModel', QldbController.createTable);
 router.get('/findTransactionsForCompany', QldbController.findTransactionsForCompany);
 router.get('/getAllTransactions', QldbController.getAllTransactions);
-router.get('/insertDocument', QldbController.insertDocument);
+router.post('/insertDocument', QldbController.insertDocument);
 router.post('/insertTransaction', QldbController.insertTransaction);
 router.get('/updateTransactionStatus', QldbController.updateTransactionStatus);
 router.get('/history', QldbController.queryHistory);

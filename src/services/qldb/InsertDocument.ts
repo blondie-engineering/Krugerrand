@@ -76,19 +76,20 @@ export async function insertDocument(
  * @param txn The {@linkcode TransactionExecutor} for lambda execute.
  * @returns Promise which fulfills with void.
  */
-async function updateAndInsertDocuments(txn: TransactionExecutor): Promise<void> {
+async function updateAndInsertDocuments(txn: TransactionExecutor, campaigns: object[]): Promise<void> {
     log("Inserting multiple documents into the remaining tables...");
     await Promise.all([
-        insertDocument(txn, AD_DATA_TABLE_NAME, AD_DATA_TRANSACTIONS)
+        insertDocument(txn, AD_DATA_TABLE_NAME, campaigns)
     ]);
 }
 
 export const insertDocumentHandler: RequestHandler = async (req: Request, res: Response) => {
   let session: QldbSession;
+  const campaigns = req.body.campaigns;
   try {
       session = await createQldbSession();
       await session.executeLambda(async (txn) => {
-          await updateAndInsertDocuments(txn);
+          await updateAndInsertDocuments(txn, campaigns);
       }, () => log("Retrying due to OCC conflict..."));
       res.send({
         message: "Successful Document Insertion"
@@ -132,7 +133,7 @@ var main = async function(): Promise<void> {
     try {
         session = await createQldbSession();
         await session.executeLambda(async (txn) => {
-            await updateAndInsertDocuments(txn);
+            await updateAndInsertDocuments(txn, []);
         }, () => log("Retrying due to OCC conflict..."));
     } catch (e) {
         error(`Unable to insert documents: ${e}`);
