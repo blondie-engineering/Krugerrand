@@ -26,6 +26,7 @@ import {
 } from "./qldb/Constants";
 import { error, log } from "./qldb/LogUtil";
 import { getFieldValue, writeValueAsIon } from "./qldb/Util";
+import { updateTransactionAmountForCompany } from './AddAmountToTransaction';
 /**
  * Insert the given list of documents into a table in a single transaction.
  * @param txn The {@linkcode TransactionExecutor} for lambda execute.
@@ -107,9 +108,7 @@ export const insertTransactionHandler: RequestHandler = async (req: Request, res
       session = await createQldbSession();
       await session.executeLambda(async (txn) => {
         if(await companyAlreadyExists(txn, company)) {
-          res.send({
-            message: "Company already exists"
-          }).status(500);
+          updateTransactionAmountForCompany(txn, req.body.company, req.body.amount);
         } else {
           await Promise.all([
               insertDocument(txn, AD_DATA_TABLE_NAME, buildTransacton(company, amount))
