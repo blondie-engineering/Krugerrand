@@ -4,9 +4,11 @@ import path from 'path';
 import express, { Request, Response, NextFunction } from 'express';
 import { ApplicationError } from './errors';
 import routes from './routes';
+var cors = require('cors')
 
 const app = express();
 
+app.use(cors());
 app.use(compression());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

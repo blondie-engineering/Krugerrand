@@ -22,26 +22,31 @@ import { Transaction } from "./Transaction";
 const EMPTY_SECONDARY_OWNERS: object[] = [];
 export const AD_DATA_TRANSACTIONS: Transaction[] = [
   {
+    id: "1",
     Company: "PwC",
     amount: 6000,
     inEth: false
   },
   {
+    id: "2",
     Company: "AdForm",
     amount: 7000,
     inEth: false
   },
   {
+    id: "3",
     Company: "Google",
     amount: 3000,
     inEth: false
   },
   {
+    id: "4",
     Company: "Revolut",
     amount: 9000,
     inEth: false
   },
   {
+    id: "5",
     Company: "Bending Spoons",
     amount: 6000,
     inEth: false

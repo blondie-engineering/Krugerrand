@@ -33,19 +33,19 @@ import { Request, Response, RequestHandler } from 'express';
  * @returns Promise which fulfills with a Reader containing the person.
  */
 
-export async function updateTransactionStatusForCompany(txn: TransactionExecutor, company: string): Promise<void> {
-    const statement: string = "UPDATE AdData SET inEth = true WHERE Company = ?";
+export async function updateTransactionStatusForCompany(txn: TransactionExecutor, id: string): Promise<void> {
+    const statement: string = "UPDATE AdData SET inEth = true WHERE id = ?";
 
     const writer: QldbWriter = createQldbWriter();
-    writeValueAsIon(company, writer);
+    writeValueAsIon(id, writer);
 
-    log(`Updating the inEth status for company name: ${company}...`);
+    log(`Updating the inEth status for id: ${id}...`);
     await txn.executeInline(statement, [writer]).then((result: Result) => {
         const resultList: Reader[] = result.getResultList();
         if (resultList.length === 0) {
             throw new Error("Unable to update company status, could not find company.");
         }
-        log(`Successfully updated transaction with company ${company} to new status.`);
+        log(`Successfully updated transaction with id ${id} to new status.`);
     });
 }
 
@@ -53,9 +53,9 @@ export const updateTransactionHandler: RequestHandler = async (req: Request, res
   let session: QldbSession;
   try {
       session = await createQldbSession();
-      const company: string = req.query.company
+      const id: string = req.query.id;
       await session.executeLambda(async (txn) => {
-          await updateTransactionStatusForCompany(txn, company);
+          await updateTransactionStatusForCompany(txn, id);
       }, () => log("Retrying due to OCC conflict..."));
       res.send({ message: "Successfully updated status"}).status(200);
   } finally {

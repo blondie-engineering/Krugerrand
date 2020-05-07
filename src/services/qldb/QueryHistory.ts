@@ -34,8 +34,7 @@ import { ionToJSON } from "ion-to-json";
  * @param vin The VIN to find previous primary owners for.
  * @returns Promise which fulfills with void.
  */
-async function previousPrimaryOwners(txn: TransactionExecutor, company: string): Promise<string> {
-    const documentId: string = await getDocumentId(txn, AD_DATA_TABLE_NAME, "Company", company);
+async function previousPrimaryOwners(txn: TransactionExecutor, id: string): Promise<string> {
     const todaysDate: Date = new Date();
     const threeMonthsAgo: Date = new Date(todaysDate);
     threeMonthsAgo.setMonth(todaysDate.getMonth() - 3);
@@ -46,10 +45,10 @@ async function previousPrimaryOwners(txn: TransactionExecutor, company: string):
         `AS h WHERE h.metadata.id = ?`;
 
     const qldbWriter: QldbWriter = createQldbWriter();
-    writeValueAsIon(documentId, qldbWriter);
+    writeValueAsIon(id, qldbWriter);
 
     return await txn.executeInline(query, [qldbWriter]).then((result: Result) => {
-        log(`Querying the 'AdData' table's history using Company: ${company}.`);
+        log(`Querying the 'AdData' table's history using id: ${id}.`);
         const resultList: Reader[] = result.getResultList();
         return ionToJSON(resultList);
     });
@@ -60,7 +59,7 @@ export const queryHistoryHandler: RequestHandler = async (req: Request, res: Res
   try {
       session = await createQldbSession();
       await session.executeLambda(async (txn) => {
-          const result = await previousPrimaryOwners(txn, req.query.company);
+          const result = await previousPrimaryOwners(txn, req.query.id);
           res.send(result).status(200);
       }, () => log("Retrying due to OCC conflict..."));
   } finally {
