@@ -69,6 +69,7 @@ export const getAllTransactionsHandler: RequestHandler = async (req: Request, re
   let session: QldbSession;
   try {
       session = await createQldbSession();
+      throw "big";
       await session.executeLambda(async (txn) => {
           const response = await getTransactions(txn);
           res.send(response).status(200);
