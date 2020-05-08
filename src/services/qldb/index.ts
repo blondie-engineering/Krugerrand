@@ -15,7 +15,7 @@ export {
     createS3BucketIfNotExists,
     setUpS3EncryptionConfiguration
 } from "./ExportJournal";
-export { verifyBlock } from "./GetBlock";
+//export { verifyBlock } from "./GetBlock";
 export { getDigestResult } from "./GetDigest";
 export { lookupRegistrationForCompany, verifyRegistration } from "./GetRevision";
 export { insertDocument } from "./InsertDocument";
@@ -23,7 +23,6 @@ export { listLedgers } from "./ListLedgers";
 export { readExport } from "./qldb/JournalS3ExportReader";
 export { getDocumentId, getFieldValue, recursivePathLookup, sleep, writeValueAsIon } from "./qldb/Util";
 export { flipRandomBit, joinHashesPairwise, parseBlock, verifyDocument } from "./qldb/Verifier";
-export { DRIVERS_LICENSE, PERSON, VEHICLE, VEHICLE_REGISTRATION } from "./model/SampleData";
 export { prettyPrintResultList, scanTableForDocuments, scanTables } from "./ScanTable";
 export { listTags, tagResource, untagResource } from "./TagResources";
 export {
