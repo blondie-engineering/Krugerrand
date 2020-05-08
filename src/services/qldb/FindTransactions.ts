@@ -74,7 +74,6 @@ export const getAllTransactionsHandler: RequestHandler = async (req: Request, re
           res.send(response).status(200);
       }, () => log("Retrying due to OCC conflict..."));
   } catch(err) {
-    console.log(err);
     res.sendStatus(err.statusCode);
   } finally {
     closeQldbSession(session);

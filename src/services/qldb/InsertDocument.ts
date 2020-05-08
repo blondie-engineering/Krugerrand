@@ -95,6 +95,8 @@ export const insertDocumentHandler: RequestHandler = async (req: Request, res: R
       res.send({
         message: "Successful Document Insertion"
       }).status(200);
+  } catch(err) {
+      res.sendStatus(err.statusCode);
   } finally {
       closeQldbSession(session);
   }
@@ -118,6 +120,8 @@ export const insertTransactionHandler: RequestHandler = async (req: Request, res
       res.send({
         message: "Successful Document Insertion"
       }).status(200);
+  } catch(err) {
+      res.sendStatus(err.statusCode);
   } finally {
       closeQldbSession(session);
   }

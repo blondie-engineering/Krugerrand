@@ -58,6 +58,8 @@ export const updateTransactionHandler: RequestHandler = async (req: Request, res
           await updateTransactionStatusForCompany(txn, id);
       }, () => log("Retrying due to OCC conflict..."));
       res.send({ message: "Successfully updated status"}).status(200);
+  } catch(err) {
+      res.sendStatus(err.statusCode);
   } finally {
       closeQldbSession(session);
   }

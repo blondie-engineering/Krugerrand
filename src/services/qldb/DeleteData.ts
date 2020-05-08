@@ -57,7 +57,9 @@ export const deleteDataHandler: RequestHandler = async (req: Request, res: Respo
           await deleteData(txn);
       }, () => log("Retrying due to OCC conflict..."));
       res.send({ message: "Successfully deleted data"}).status(200);
+  } catch(err) {
+    res.sendStatus(err.statusCode);
   } finally {
-      closeQldbSession(session);
+    closeQldbSession(session);
   }
 }

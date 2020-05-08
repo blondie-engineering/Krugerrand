@@ -62,6 +62,8 @@ export const queryHistoryHandler: RequestHandler = async (req: Request, res: Res
           const result = await previousPrimaryOwners(txn, req.query.id);
           res.send(result).status(200);
       }, () => log("Retrying due to OCC conflict..."));
+  } catch(err) {
+      res.sendStatus(err.statusCode);
   } finally {
       closeQldbSession(session);
   }
