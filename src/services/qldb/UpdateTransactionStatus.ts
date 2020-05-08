@@ -33,14 +33,14 @@ import { Request, Response, RequestHandler } from 'express';
  * @returns Promise which fulfills with a Reader containing the person.
  */
 
-export async function updateTransactionStatusForCompany(txn: TransactionExecutor, id: string): Promise<void> {
-    const statement: string = "UPDATE AdData BY id SET inEth = true WHERE id = ?";
+export async function updateTransactionStatusForCompany(txn: TransactionExecutor, id: string, ethAddress: string): Promise<void> {
+    const statement: string = `UPDATE AdData BY id SET inEth = true, ethAddress='${ethAddress}' WHERE id='${id}'`;
+    console.log(statement);
 
     const writer: QldbWriter = createQldbWriter();
-    writeValueAsIon(id, writer);
 
     log(`Updating the inEth status for id: ${id}...`);
-    await txn.executeInline(statement, [writer]).then((result: Result) => {
+    await txn.executeInline(statement, []).then((result: Result) => {
         const resultList: Reader[] = result.getResultList();
         if (resultList.length === 0) {
             throw new Error("Unable to update company status, could not find company.");
@@ -54,12 +54,13 @@ export const updateTransactionHandler: RequestHandler = async (req: Request, res
   try {
       session = await createQldbSession();
       const id: string = req.query.id;
+      const ethAddress: string = req.query.ethAddress;
       await session.executeLambda(async (txn) => {
-          await updateTransactionStatusForCompany(txn, id);
+          await updateTransactionStatusForCompany(txn, id, ethAddress);
       }, () => log("Retrying due to OCC conflict..."));
       res.send({ message: "Successfully updated status"}).status(200);
   } catch(err) {
-      res.sendStatus(err.statusCode);
+      res.sendStatus(err.statusCode || 500);
   } finally {
       closeQldbSession(session);
   }
@@ -79,7 +80,7 @@ var main = async function(): Promise<void> {
         const company: string = AD_DATA_TRANSACTIONS[0].company;
 
         await session.executeLambda(async (txn) => {
-            await updateTransactionStatusForCompany(txn, company);
+            await updateTransactionStatusForCompany(txn, company, null);
         }, () => log("Retrying due to OCC conflict..."));
     } catch (e) {
         error(`Unable to connect and run queries: ${e}`);

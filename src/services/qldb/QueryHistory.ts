@@ -40,7 +40,7 @@ async function previousPrimaryOwners(txn: TransactionExecutor, id: string): Prom
     threeMonthsAgo.setMonth(todaysDate.getMonth() - 3);
 
     const query: string =
-        `SELECT data.inEth, data.amount, data.company, metadata.version FROM history ` +
+        `SELECT data.inEth, data.amount, data.company, data.ethAddress, metadata.version FROM history ` +
         `(${AD_DATA_TABLE_NAME}, \`${threeMonthsAgo.toISOString()}\`, \`${todaysDate.toISOString()}\`) ` +
         `AS h WHERE h.metadata.id = ?`;
 
