@@ -177,7 +177,7 @@ var main = async function(): Promise<void> {
         session = await createQldbSession();
 
         const registration = AD_DATA_TRANSACTIONS[0];
-        const company: string = registration.Company;
+        const company: string = registration.company;
 
         await session.executeLambda(async (txn) => {
             await verifyRegistration(txn, LEDGER_NAME, company, qldbClient);

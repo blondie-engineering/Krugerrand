@@ -16,6 +16,7 @@ const errorMW = (handler: RequestHandler): RequestHandler => async (req, res, ne
         error: err
       });
     }
+    res.status(500);
     next(err);
   });
 };

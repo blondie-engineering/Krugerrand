@@ -1,6 +1,6 @@
 export interface Transaction {
   id: string,
-  Company: string,
+  company: string,
   amount: number,
   inEth: boolean
 }

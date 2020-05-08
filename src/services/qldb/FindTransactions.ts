@@ -82,6 +82,9 @@ export const findTransactionsHandler: RequestHandler = async (req: Request, res:
   let session: QldbSession;
   try {
       session = await createQldbSession();
+      throw "BIg";
+      throw 500;
+      const vla = 5/ 0;
       await session.executeLambda(async (txn) => {
           const response = await findTransactionsForCompany(txn, req.query.company);
           res.send(response).status(200);
@@ -99,7 +102,7 @@ var main = async function(): Promise<void> {
     try {
         session = await createQldbSession();
         await session.executeLambda(async (txn) => {
-            await findTransactionsForCompany(txn, AD_DATA_TRANSACTIONS[0].Company);
+            await findTransactionsForCompany(txn, AD_DATA_TRANSACTIONS[0].company);
         }, () => log("Retrying due to OCC conflict..."));
     } catch (e) {
         error(`Error getting vehicles for owner: ${e}`);

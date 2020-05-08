@@ -34,7 +34,7 @@ import { Request, Response, RequestHandler } from 'express';
  */
 
 export async function updateTransactionStatusForCompany(txn: TransactionExecutor, id: string): Promise<void> {
-    const statement: string = "UPDATE AdData SET inEth = true WHERE id = ?";
+    const statement: string = "UPDATE AdData BY id SET inEth = true WHERE id = ?";
 
     const writer: QldbWriter = createQldbWriter();
     writeValueAsIon(id, writer);
@@ -74,7 +74,7 @@ var main = async function(): Promise<void> {
     try {
         session = await createQldbSession();
 
-        const company: string = AD_DATA_TRANSACTIONS[0].Company;
+        const company: string = AD_DATA_TRANSACTIONS[0].company;
 
         await session.executeLambda(async (txn) => {
             await updateTransactionStatusForCompany(txn, company);

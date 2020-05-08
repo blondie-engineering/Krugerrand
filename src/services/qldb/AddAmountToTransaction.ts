@@ -35,20 +35,20 @@ import { Request, Response, RequestHandler } from 'express';
 
 
 
-export async function updateTransactionAmountForCompany(txn: TransactionExecutor, company: string, amount: number): Promise<void> {
+export async function updateTransactionAmountForCompany(txn: TransactionExecutor, id: string, amount: number): Promise<void> {
 
-    const statement: string = `UPDATE AdData SET amount = amount + ${amount} WHERE Company = ?`;
+    const statement: string = `UPDATE AdData BY id SET amount = amount + ${amount} WHERE id = ?`;
 
     const writer: QldbWriter = createQldbWriter();
-    writeValueAsIon(company, writer);
+    writeValueAsIon(id, writer);
 
-    log(`Updating the inEth status for company name: ${company}...`);
+    log(`Updating the inEth status for company with id : ${id}...`);
     await txn.executeInline(statement, [writer]).then((result: Result) => {
         const resultList: Reader[] = result.getResultList();
         if (resultList.length === 0) {
             throw new Error("Unable to update company status, could not find company.");
         }
-        log(`Successfully updated transaction with company ${company} to new amount.`);
+        log(`Successfully updated transaction with id ${id} to new amount.`);
     });
 }
 
@@ -56,10 +56,10 @@ export const updateTransactionAmountForCompanyHandler: RequestHandler = async (r
   let session: QldbSession;
   try {
       session = await createQldbSession();
-      const company: string = req.query.company
+      const id: string = req.query.id;
       const amount: number = req.query.amount;
       await session.executeLambda(async (txn) => {
-          await updateTransactionAmountForCompany(txn, company, amount);
+          await updateTransactionAmountForCompany(txn, id, amount);
       }, () => log("Retrying due to OCC conflict..."));
       res.send({ message: "Successfully updated amount"}).status(200);
   } finally {

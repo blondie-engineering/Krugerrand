@@ -40,7 +40,7 @@ async function previousPrimaryOwners(txn: TransactionExecutor, id: string): Prom
     threeMonthsAgo.setMonth(todaysDate.getMonth() - 3);
 
     const query: string =
-        `SELECT data.inEth, data.amount, metadata.version FROM history ` +
+        `SELECT data.inEth, data.amount, data.company, metadata.version FROM history ` +
         `(${AD_DATA_TABLE_NAME}, \`${threeMonthsAgo.toISOString()}\`, \`${todaysDate.toISOString()}\`) ` +
         `AS h WHERE h.metadata.id = ?`;
 
@@ -75,7 +75,7 @@ var main = async function(): Promise<void> {
     let session: QldbSession;
     try {
         session = await createQldbSession();
-        const company: string = AD_DATA_TRANSACTIONS[0].Company;
+        const company: string = AD_DATA_TRANSACTIONS[0].company;
         await session.executeLambda(async (txn) => {
             await previousPrimaryOwners(txn, company);
         }, () => log("Retrying due to OCC conflict..."));

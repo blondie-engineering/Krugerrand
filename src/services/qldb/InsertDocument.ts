@@ -38,7 +38,7 @@ import { updateTransactionAmountForCompany } from './AddAmountToTransaction';
 function buildTransacton(company: string, amount: number): object[] {
   const response = [];
   response.push({
-    "Company": company,
+    "company": company,
     "amount": amount,
     "inEth": false
   });
