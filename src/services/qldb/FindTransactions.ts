@@ -54,7 +54,7 @@ export async function findTransactionsForCompany(txn: TransactionExecutor, compa
 }
 
 export async function getTransactions(txn: TransactionExecutor): Promise<Transaction[]> {
-    const query: string = `SELECT id, company, inEth, amount FROM Ad BY id`;
+    const query: string = `SELECT id, company, inEth, amount FROM AdData BY id`;
 
     const resultList = await txn.executeInline(query, []).then((result: Result) => {
         const resultList: Reader[] = result.getResultList();
