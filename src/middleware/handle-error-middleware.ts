@@ -8,7 +8,7 @@ import logger from '../logger';
  * @param handler Request handler to check for error
  */
 const errorMW = (handler: RequestHandler): RequestHandler => async (req, res, next) => {
-  handler(req, res, next).catch((err: Error) => {
+  handler(req, res, next).catch((err: any) => {
     if (process.env.NODE_ENV === 'development') {
       logger.log({
         level: 'error',
@@ -17,7 +17,6 @@ const errorMW = (handler: RequestHandler): RequestHandler => async (req, res, ne
       });
     }
     next(err);
-    res.status(500);
   });
 };
 

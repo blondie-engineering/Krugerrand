@@ -54,7 +54,7 @@ export async function findTransactionsForCompany(txn: TransactionExecutor, compa
 }
 
 export async function getTransactions(txn: TransactionExecutor): Promise<Transaction[]> {
-    const query: string = `SELECT id, company, inEth, amount FROM AdData BY id`;
+    const query: string = `SELECT id, company, inEth, amount FROM Ad BY id`;
 
     const resultList = await txn.executeInline(query, []).then((result: Result) => {
         const resultList: Reader[] = result.getResultList();
@@ -69,13 +69,15 @@ export const getAllTransactionsHandler: RequestHandler = async (req: Request, re
   let session: QldbSession;
   try {
       session = await createQldbSession();
-      throw "big";
       await session.executeLambda(async (txn) => {
           const response = await getTransactions(txn);
           res.send(response).status(200);
       }, () => log("Retrying due to OCC conflict..."));
+  } catch(err) {
+    console.log(err);
+    res.status(err.statusCode).send(err.message);
   } finally {
-      closeQldbSession(session);
+    closeQldbSession(session);
   }
 }
 
