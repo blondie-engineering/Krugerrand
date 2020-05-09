@@ -64,17 +64,20 @@ async function getRevision(
  * @param vin VIN to query the table metadata of a specific registration with.
  * @returns Promise which fulfills with a list of Readers that contains the results of the query.
  */
-export async function lookupRegistrationForCompany(txn: TransactionExecutor, company: string): Promise<Reader[]> {
-    log(`Querying the 'AdData' table for Company: ${company}...`);
+export async function lookupRegistrationForCompany(txn: TransactionExecutor, id: string): Promise<Reader[]> {
+    log(`Querying the 'AdData' table for id: ${id}...`);
     let resultList: Reader[];
-    const query: string = "SELECT blockAddress, metadata.id FROM _ql_committed_AdData WHERE data.Company = ?";
+    const query: string = "SELECT blockAddress, metadata.id FROM _ql_committed_AdData WHERE metadata.id = ?";
 
     const qldbWriter: QldbWriter = createQldbWriter();
-    writeValueAsIon(company, qldbWriter);
+    writeValueAsIon(id, qldbWriter);
 
     await txn.executeInline(query, [qldbWriter]).then(function(result) {
       resultList = result.getResultList();
     });
+    if(!resultList.length) {
+      throw "No such row";
+    }
     return resultList;
 }
 
@@ -90,10 +93,10 @@ export async function lookupRegistrationForCompany(txn: TransactionExecutor, com
 export async function verifyRegistration(
     txn: TransactionExecutor,
     ledgerName: string,
-    company: string,
+    id: string,
     qldbClient: QLDB
 ): Promise<Boolean> {
-    log(`Let's verify the adData with Company = ${company}, in ledger = ${ledgerName}.`);
+    log(`Let's verify the adData with id = ${id}, in ledger = ${ledgerName}.`);
     const digest: GetDigestResponse = await getDigestResult(ledgerName, qldbClient);
     const digestBytes: Digest = digest.Digest;
     const digestTipAddress: ValueHolder = digest.DigestTipAddress;
@@ -102,8 +105,8 @@ export async function verifyRegistration(
         `Got a ledger digest: digest tip address = \n${valueHolderToString(digestTipAddress)},
         digest = \n${toBase64(<Uint8Array> digestBytes)}.`
     );
-    log(`Querying the Adata form = ${company} to verify each version of the adData...`);
-    const resultList: Reader[] = await lookupRegistrationForCompany(txn, company);
+    log(`Querying the Adata form = ${id} to verify each version of the adData...`);
+    const resultList: Reader[] = await lookupRegistrationForCompany(txn, id);
     log("Getting a proof for the document.");
 
     for (const result of resultList) {
@@ -156,11 +159,14 @@ export const verifyTransactionHandler: RequestHandler = async (req: Request, res
       session = await createQldbSession();
 
       await session.executeLambda(async (txn) => {
-          const isVerified = await verifyRegistration(txn, LEDGER_NAME, req.query.company, qldbClient);
-          res.send({
+          const isVerified = await verifyRegistration(txn, LEDGER_NAME, req.query.id, qldbClient);
+          res.setHeader('Content-Type', 'application/json');
+          res.json({
             message: isVerified ? 'Verified' : 'Hacked'
           }).status(200);
       });
+  } catch(err) {
+      res.sendStatus(err.statusCode);
   } finally {
       closeQldbSession(session);
   }

@@ -145,6 +145,52 @@
 //     }
 // }
 //
+// try {
+//     const qldbClient: QLDB = new QLDB();
+//     session = await createQldbSession();
+//
+//     const registration = VEHICLE_REGISTRATION[1];
+//     const vin: string = registration.VIN;
+//
+//     await session.executeLambda(async (txn) => {
+//         const result: Reader[] = await lookupRegistrationForCompany(txn, vin);
+//         for (const reader of result) {
+//             const blockAddress: ValueHolder = blockAddressToValueHolder(reader);
+//             await verifyBlock(LEDGER_NAME, blockAddress, qldbClient);
+//         }
+//     }, () => log("Retrying due to OCC conflict..."));
+// } catch (e) {
+//     error(`Unable to query vehicle registration by Vin: ${e}`);
+// } finally {
+//     closeQldbSession(session);
+// }
+//
+// export const insertTransactionHandler: RequestHandler = async (req: Request, res: Response) => {
+//   let session: QldbSession;
+//   const company: string = req.body.company;
+//   const amount: number = req.body.amount;
+//   try {
+//       session = await createQldbSession();
+//       await session.executeLambda(async (txn) => {
+//         if(await companyAlreadyExists(txn, company)) {
+//           updateTransactionAmountForCompany(txn, req.body.company, req.body.amount);
+//         } else {
+//           await Promise.all([
+//               insertDocument(txn, AD_DATA_TABLE_NAME, buildTransacton(company, amount))
+//           ]);
+//         }
+//       }, () => log("Retrying due to OCC conflict..."));
+//       res.send({
+//         message: "Successful Document Insertion"
+//       }).status(200);
+//   } catch(err) {
+//       res.sendStatus(err.statusCode);
+//   } finally {
+//       closeQldbSession(session);
+//   }
+// }
+//
+//
 // /**
 //  * Get a journal block from a QLDB ledger.
 //  * After getting the block, we get the digest of the ledger and validate the proof returned in the getBlock response.
