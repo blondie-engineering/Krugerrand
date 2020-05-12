@@ -1,8 +1,8 @@
 {
-  "name": "express-typescript-boilerplate",
+  "name": "Krugerrand quantum backend",
   "version": "1.0.0",
   "description": "Krugerrand quantum backend",
-  "author": "Sidhant Panda",
+  "author": "Walczak Pawel - B&B - Creds - Amazon Sidhant Panda",
   "main": "dist/index.js",
   "scripts": {
     "eslint": "eslint src/server.ts",
