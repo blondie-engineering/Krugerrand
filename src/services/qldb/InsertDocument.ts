@@ -121,7 +121,7 @@ export const insertTransactionHandler: RequestHandler = async (req: Request, res
         message: "Successful Document Insertion"
       }).status(200);
   } catch(err) {
-      res.sendStatus(err.statusCode);
+      res.sendStatus(err.statusCode || 500);
   } finally {
       closeQldbSession(session);
   }
