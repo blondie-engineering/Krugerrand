@@ -1,18 +1,30 @@
 FROM node:10
 
 # Add package file
-COPY package*.json ./
-
+COPY . .
+ENV AWS_ACCESS_KEY_ID=xxx
+ENV AWS_SECRET_ACCESS_KEY=xxx
+ENV AWS_REGION=eu-west-1
 # Install deps
 RUN npm i
 
 # Copy source
-COPY . .
 
+EXPOSE 3000
 # Build dist
-RUN npm run build
+CMD ["npm","run","dev"]
 
 # Expose port 3000
-EXPOSE 3000
 
-CMD npm run start
+
+
+
+
+
+
+
+
+
+
+
+
