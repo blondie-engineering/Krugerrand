@@ -16,22 +16,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QldbSession, Result, TransactionExecutor } from "amazon-qldb-driver-nodejs";
-import { decodeUtf8, makePrettyWriter, Reader, Writer } from "ion-js";
+import { QldbSession, Result, TransactionExecutor } from 'amazon-qldb-driver-nodejs';
+import {
+  decodeUtf8, makePrettyWriter, Reader, Writer
+} from 'ion-js';
 
-import { closeQldbSession, createQldbSession } from "./ConnectToLedger";
-import { log } from "./qldb/LogUtil";
+import { closeQldbSession, createQldbSession } from './ConnectToLedger';
+import { log } from './qldb/LogUtil';
 
 /**
  * Pretty print the Readers in the provided result list.
  * @param resultList The result list containing the Readers to pretty print.
  */
 export function prettyPrintResultList(resultList: Reader[]): void {
-    const writer: Writer = makePrettyWriter();
-    resultList.forEach((reader: Reader) => {
-        writer.writeValues(reader);
-    });
-    log(decodeUtf8(writer.getBytes()));
+  const writer: Writer = makePrettyWriter();
+  resultList.forEach((reader: Reader) => {
+    writer.writeValues(reader);
+  });
+  log(decodeUtf8(writer.getBytes()));
 }
 
 /**
@@ -41,11 +43,9 @@ export function prettyPrintResultList(resultList: Reader[]): void {
  * @returns Promise which fulfills with a {@linkcode Result} object.
  */
 export async function scanTableForDocuments(txn: TransactionExecutor, tableName: string): Promise<Result> {
-    log(`Scanning ${tableName}...`);
-    const query: string = `SELECT * FROM ${tableName}`;
-    return await txn.executeInline(query).then((result: Result) => {
-        return result;
-    });
+  log(`Scanning ${tableName}...`);
+  const query: string = `SELECT * FROM ${tableName}`;
+  return await txn.executeInline(query).then((result: Result) => result);
 }
 
 /**
@@ -54,32 +54,32 @@ export async function scanTableForDocuments(txn: TransactionExecutor, tableName:
  * @returns Promise which fulfills with a list of table names.
  */
 export async function scanTables(session: QldbSession): Promise<string[]> {
-    return await session.getTableNames();
+  return await session.getTableNames();
 }
 
 /**
  * Scan for all the documents in a table.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    let session: QldbSession;
-    try {
-        session = await createQldbSession();
-        await scanTables(session).then(async (listofTables: string[]) => {
-            for (const tableName of listofTables) {
-                await session.executeLambda(async (txn) => {
-                    const result: Result = await scanTableForDocuments(txn, tableName);
-                    prettyPrintResultList(result.getResultList());
-                });
-            }
-        }, () => log("Retrying due to OCC conflict..."));
-    } catch (e) {
-        log(`Error displaying documents: ${e}`);
-    } finally {
-        closeQldbSession(session);
-    }
-}
+const main = async function (): Promise<void> {
+  let session: QldbSession;
+  try {
+    session = await createQldbSession();
+    await scanTables(session).then(async (listofTables: string[]) => {
+      for (const tableName of listofTables) {
+        await session.executeLambda(async (txn) => {
+          const result: Result = await scanTableForDocuments(txn, tableName);
+          prettyPrintResultList(result.getResultList());
+        });
+      }
+    }, () => log('Retrying due to OCC conflict...'));
+  } catch (e) {
+    log(`Error displaying documents: ${e}`);
+  } finally {
+    closeQldbSession(session);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

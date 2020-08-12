@@ -19,8 +19,8 @@ if (process.env.NODE_ENV === 'development') {
   router.get('/dev/api-docs', swaggerUi.setup(apiSpec, swaggerUiOptions));
 }
 
-router.use(function(req, res, next) {
-  res.send({error: "NotFound"}).status(404);
+router.use((req, res, next) => {
+  res.send({ error: 'NotFound' }).status(404);
 });
 
 export default router;

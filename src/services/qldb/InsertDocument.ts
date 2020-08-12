@@ -16,16 +16,18 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { createQldbWriter, QldbSession, QldbWriter, Result, TransactionExecutor } from "amazon-qldb-driver-nodejs";
-import { Reader } from "ion-js";
-import { Request, Response, RequestHandler } from 'express';
-import { closeQldbSession, createQldbSession } from "./ConnectToLedger";
-import { AD_DATA_TRANSACTIONS } from "./model/SampleData";
 import {
-    AD_DATA_TABLE_NAME
-} from "./qldb/Constants";
-import { error, log } from "./qldb/LogUtil";
-import { getFieldValue, writeValueAsIon } from "./qldb/Util";
+  createQldbWriter, QldbSession, QldbWriter, Result, TransactionExecutor
+} from 'amazon-qldb-driver-nodejs';
+import { Reader } from 'ion-js';
+import { Request, Response, RequestHandler } from 'express';
+import { closeQldbSession, createQldbSession } from './ConnectToLedger';
+import { AD_DATA_TRANSACTIONS } from './model/SampleData';
+import {
+  AD_DATA_TABLE_NAME
+} from './qldb/Constants';
+import { error, log } from './qldb/LogUtil';
+import { getFieldValue, writeValueAsIon } from './qldb/Util';
 import { updateTransactionAmountForCompany } from './AddAmountToTransaction';
 /**
  * Insert the given list of documents into a table in a single transaction.
@@ -38,38 +40,38 @@ import { updateTransactionAmountForCompany } from './AddAmountToTransaction';
 function buildTransacton(company: string, amount: number): object[] {
   const response = [];
   response.push({
-    "company": company,
-    "amount": amount,
-    "inEth": false
+    company,
+    amount,
+    inEth: false
   });
   return response;
 }
 
 async function companyAlreadyExists(txn: TransactionExecutor, company: string): Promise<boolean> {
-    const query: string = "SELECT * FROM AdData WHERE Company = ?";
-    const documentsWriter: QldbWriter = createQldbWriter();
-    writeValueAsIon(company, documentsWriter);
+  const query: string = 'SELECT * FROM AdData WHERE Company = ?';
+  const documentsWriter: QldbWriter = createQldbWriter();
+  writeValueAsIon(company, documentsWriter);
 
-    let companyAlreadyExists: boolean = true;
-    await txn.executeInline(query, [documentsWriter]).then((result: Result) => {
-        const resultList = result.getResultList();
-        if (resultList.length === 0) {
-            companyAlreadyExists = false;
-        }
-    });
-    return companyAlreadyExists;
+  let companyAlreadyExists: boolean = true;
+  await txn.executeInline(query, [documentsWriter]).then((result: Result) => {
+    const resultList = result.getResultList();
+    if (resultList.length === 0) {
+      companyAlreadyExists = false;
+    }
+  });
+  return companyAlreadyExists;
 }
 
 export async function insertDocument(
-    txn: TransactionExecutor,
-    tableName: string,
-    documents: object[]
+  txn: TransactionExecutor,
+  tableName: string,
+  documents: object[]
 ): Promise<Result> {
-    const statement: string = `INSERT INTO ${tableName} ?`;
-    const documentsWriter: QldbWriter = createQldbWriter();
-    writeValueAsIon(documents, documentsWriter);
-    let result: Result = await txn.executeInline(statement, [documentsWriter]);
-    return result;
+  const statement: string = `INSERT INTO ${tableName} ?`;
+  const documentsWriter: QldbWriter = createQldbWriter();
+  writeValueAsIon(documents, documentsWriter);
+  const result: Result = await txn.executeInline(statement, [documentsWriter]);
+  return result;
 }
 
 /**
@@ -78,73 +80,73 @@ export async function insertDocument(
  * @returns Promise which fulfills with void.
  */
 async function updateAndInsertDocuments(txn: TransactionExecutor, campaigns: object[]): Promise<void> {
-    log("Inserting multiple documents into the remaining tables...");
-    await Promise.all([
-        insertDocument(txn, AD_DATA_TABLE_NAME, campaigns)
-    ]);
+  log('Inserting multiple documents into the remaining tables...');
+  await Promise.all([
+    insertDocument(txn, AD_DATA_TABLE_NAME, campaigns)
+  ]);
 }
 
 export const insertDocumentHandler: RequestHandler = async (req: Request, res: Response) => {
   let session: QldbSession;
-  const campaigns = req.body.campaigns;
+  const { campaigns } = req.body;
   try {
-      session = await createQldbSession();
-      await session.executeLambda(async (txn) => {
-          await updateAndInsertDocuments(txn, campaigns);
-      }, () => log("Retrying due to OCC conflict..."));
-      res.send({
-        message: "Successful Document Insertion"
-      }).status(200);
-  } catch(err) {
-      res.sendStatus(err.statusCode);
+    session = await createQldbSession();
+    await session.executeLambda(async (txn) => {
+      await updateAndInsertDocuments(txn, campaigns);
+    }, () => log('Retrying due to OCC conflict...'));
+    res.send({
+      message: 'Successful Document Insertion'
+    }).status(200);
+  } catch (err) {
+    res.sendStatus(err.statusCode);
   } finally {
-      closeQldbSession(session);
+    closeQldbSession(session);
   }
-}
+};
 
 export const insertTransactionHandler: RequestHandler = async (req: Request, res: Response) => {
   let session: QldbSession;
-  const company: string = req.body.company;
-  const amount: number = req.body.amount;
+  const { company } = req.body;
+  const { amount } = req.body;
   try {
-      session = await createQldbSession();
-      await session.executeLambda(async (txn) => {
-        if(await companyAlreadyExists(txn, company)) {
-          updateTransactionAmountForCompany(txn, req.body.company, req.body.amount);
-        } else {
-          await Promise.all([
-              insertDocument(txn, AD_DATA_TABLE_NAME, buildTransacton(company, amount))
-          ]);
-        }
-      }, () => log("Retrying due to OCC conflict..."));
-      res.send({
-        message: "Successful Document Insertion"
-      }).status(200);
-  } catch(err) {
-      res.sendStatus(err.statusCode || 500);
+    session = await createQldbSession();
+    await session.executeLambda(async (txn) => {
+      if (await companyAlreadyExists(txn, company)) {
+        updateTransactionAmountForCompany(txn, req.body.company, req.body.amount);
+      } else {
+        await Promise.all([
+          insertDocument(txn, AD_DATA_TABLE_NAME, buildTransacton(company, amount))
+        ]);
+      }
+    }, () => log('Retrying due to OCC conflict...'));
+    res.send({
+      message: 'Successful Document Insertion'
+    }).status(200);
+  } catch (err) {
+    res.sendStatus(err.statusCode || 500);
   } finally {
-      closeQldbSession(session);
+    closeQldbSession(session);
   }
-}
+};
 
 /**
  * Insert documents into a table in a QLDB ledger.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    let session: QldbSession;
-    try {
-        session = await createQldbSession();
-        await session.executeLambda(async (txn) => {
-            await updateAndInsertDocuments(txn, []);
-        }, () => log("Retrying due to OCC conflict..."));
-    } catch (e) {
-        error(`Unable to insert documents: ${e}`);
-    } finally {
-        closeQldbSession(session);
-    }
-}
+const main = async function (): Promise<void> {
+  let session: QldbSession;
+  try {
+    session = await createQldbSession();
+    await session.executeLambda(async (txn) => {
+      await updateAndInsertDocuments(txn, []);
+    }, () => log('Retrying due to OCC conflict...'));
+  } catch (e) {
+    error(`Unable to insert documents: ${e}`);
+  } finally {
+    closeQldbSession(session);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

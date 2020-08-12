@@ -16,38 +16,38 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { Decimal } from "ion-js";
-import { Transaction } from "./Transaction";
+import { Decimal } from 'ion-js';
+import { Transaction } from './Transaction';
 
 const EMPTY_SECONDARY_OWNERS: object[] = [];
 export const AD_DATA_TRANSACTIONS: Transaction[] = [
   {
-    id: "1",
-    company: "PwC",
+    id: '1',
+    company: 'PwC',
     amount: 6000,
     inEth: false
   },
   {
-    id: "2",
-    company: "AdForm",
+    id: '2',
+    company: 'AdForm',
     amount: 7000,
     inEth: false
   },
   {
-    id: "3",
-    company: "Google",
+    id: '3',
+    company: 'Google',
     amount: 3000,
     inEth: false
   },
   {
-    id: "4",
-    company: "Revolut",
+    id: '4',
+    company: 'Revolut',
     amount: 9000,
     inEth: false
   },
   {
-    id: "5",
-    company: "Bending Spoons",
+    id: '5',
+    company: 'Bending Spoons',
     amount: 6000,
     inEth: false
   }

@@ -16,26 +16,26 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QLDB } from "aws-sdk";
+import { QLDB } from 'aws-sdk';
 import {
-    CreateLedgerRequest,
-    CreateLedgerResponse,
-    ListTagsForResourceRequest,
-    ListTagsForResourceResponse,
-    TagResourceRequest,
-    Tags,
-    UntagResourceRequest
-} from "aws-sdk/clients/qldb";
+  CreateLedgerRequest,
+  CreateLedgerResponse,
+  ListTagsForResourceRequest,
+  ListTagsForResourceResponse,
+  TagResourceRequest,
+  Tags,
+  UntagResourceRequest
+} from 'aws-sdk/clients/qldb';
 
-import { LEDGER_NAME_WITH_TAGS } from "./qldb/Constants";
-import { error, log } from "./qldb/LogUtil";
+import { LEDGER_NAME_WITH_TAGS } from './qldb/Constants';
+import { error, log } from './qldb/LogUtil';
 
 const ADD_TAGS = {
-    Domain: 'Prod'
+  Domain: 'Prod'
 };
 const CREATE_TAGS = {
-    IsTest: 'true',
-    Domain: 'Test'
+  IsTest: 'true',
+  Domain: 'Test'
 };
 const REMOVE_TAGS = ['IsTest'];
 
@@ -47,15 +47,15 @@ const REMOVE_TAGS = ['IsTest'];
  * @returns Promise which fulfills with a CreateLedgerResponse.
  */
 async function createWithTags(ledgerName: string, tags: Tags, qldbClient: QLDB): Promise<CreateLedgerResponse> {
-    log(`Creating ledger with name: ${ledgerName}.`);
-    const request: CreateLedgerRequest = {
-        Name: ledgerName,
-        Tags: tags,
-        PermissionsMode: "ALLOW_ALL"
-    };
-    const result: CreateLedgerResponse = await qldbClient.createLedger(request).promise();
-    log(`Success. Ledger state: ${result.State}.`);
-    return result;
+  log(`Creating ledger with name: ${ledgerName}.`);
+  const request: CreateLedgerRequest = {
+    Name: ledgerName,
+    Tags: tags,
+    PermissionsMode: 'ALLOW_ALL'
+  };
+  const result: CreateLedgerResponse = await qldbClient.createLedger(request).promise();
+  log(`Success. Ledger state: ${result.State}.`);
+  return result;
 }
 
 /**
@@ -65,13 +65,13 @@ async function createWithTags(ledgerName: string, tags: Tags, qldbClient: QLDB):
  * @returns Promise which fulfills with a ListTagsForResourceResponse.
  */
 export async function listTags(resourceArn: string, qldbClient: QLDB): Promise<ListTagsForResourceResponse> {
-    log(`Listing the tags for resource with arn: ${resourceArn}.`);
-    const request: ListTagsForResourceRequest = {
-        ResourceArn: resourceArn
-    };
-    const result: ListTagsForResourceResponse = await qldbClient.listTagsForResource(request).promise();
-    log(`Success. Tags: ${JSON.stringify(result.Tags)}`);
-    return result;
+  log(`Listing the tags for resource with arn: ${resourceArn}.`);
+  const request: ListTagsForResourceRequest = {
+    ResourceArn: resourceArn
+  };
+  const result: ListTagsForResourceResponse = await qldbClient.listTagsForResource(request).promise();
+  log(`Success. Tags: ${JSON.stringify(result.Tags)}`);
+  return result;
 }
 
 /**
@@ -82,13 +82,13 @@ export async function listTags(resourceArn: string, qldbClient: QLDB): Promise<L
  * @returns Promise which fulfills with void.
  */
 export async function tagResource(resourceArn: string, tags: Tags, qldbClient: QLDB): Promise<void> {
-    log(`Adding tags ${JSON.stringify(tags)} for resource with arn: ${resourceArn}.`);
-    const request: TagResourceRequest = {
-        ResourceArn: resourceArn,
-        Tags: tags
-    };
-    await qldbClient.tagResource(request).promise();
-    log("Successfully added tags.");
+  log(`Adding tags ${JSON.stringify(tags)} for resource with arn: ${resourceArn}.`);
+  const request: TagResourceRequest = {
+    ResourceArn: resourceArn,
+    Tags: tags
+  };
+  await qldbClient.tagResource(request).promise();
+  log('Successfully added tags.');
 }
 
 /**
@@ -99,34 +99,34 @@ export async function tagResource(resourceArn: string, tags: Tags, qldbClient: Q
  * @returns Promise which fulfills with void.
  */
 export async function untagResource(resourceArn: string, tagsKeys: string[], qldbClient: QLDB): Promise<void> {
-    log(`Removing tags ${JSON.stringify(tagsKeys)} for resource with arn: ${resourceArn}.`);
-    const request: UntagResourceRequest = {
-        ResourceArn: resourceArn,
-        TagKeys: tagsKeys
-    };
-    await qldbClient.untagResource(request).promise();
-    log("Successfully removed tags.");
+  log(`Removing tags ${JSON.stringify(tagsKeys)} for resource with arn: ${resourceArn}.`);
+  const request: UntagResourceRequest = {
+    ResourceArn: resourceArn,
+    TagKeys: tagsKeys
+  };
+  await qldbClient.untagResource(request).promise();
+  log('Successfully removed tags.');
 }
 
 /**
  * Tagging and un-tagging resources, including tag on create.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    try {
-        const qldbClient: QLDB = new QLDB();
-        const result: CreateLedgerResponse = await createWithTags(LEDGER_NAME_WITH_TAGS, CREATE_TAGS, qldbClient);
-        const arn: string = result.Arn;
-        await listTags(arn, qldbClient);
-        await tagResource(arn, ADD_TAGS, qldbClient);
-        await listTags(arn, qldbClient);
-        await untagResource(arn, REMOVE_TAGS, qldbClient);
-        await listTags(arn, qldbClient);
-    } catch (e) {
-        error(`Unable to tag resources: ${e}`);
-    }
-}
+const main = async function (): Promise<void> {
+  try {
+    const qldbClient: QLDB = new QLDB();
+    const result: CreateLedgerResponse = await createWithTags(LEDGER_NAME_WITH_TAGS, CREATE_TAGS, qldbClient);
+    const arn: string = result.Arn;
+    await listTags(arn, qldbClient);
+    await tagResource(arn, ADD_TAGS, qldbClient);
+    await listTags(arn, qldbClient);
+    await untagResource(arn, REMOVE_TAGS, qldbClient);
+    await listTags(arn, qldbClient);
+  } catch (e) {
+    error(`Unable to tag resources: ${e}`);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

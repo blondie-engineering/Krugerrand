@@ -16,20 +16,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { isResourcePreconditionNotMetException } from "amazon-qldb-driver-nodejs";
-import { QLDB } from "aws-sdk";
+import { isResourcePreconditionNotMetException } from 'amazon-qldb-driver-nodejs';
+import { QLDB } from 'aws-sdk';
 import {
-    CreateLedgerRequest,
-    CreateLedgerResponse,
-    UpdateLedgerRequest,
-    UpdateLedgerResponse
-} from "aws-sdk/clients/qldb";
+  CreateLedgerRequest,
+  CreateLedgerResponse,
+  UpdateLedgerRequest,
+  UpdateLedgerResponse
+} from 'aws-sdk/clients/qldb';
 
-import { waitForActive } from "./CreateLedger"
-import { deleteLedger } from "./DeleteLedger"
-import { error, log } from "./qldb/LogUtil";
+import { waitForActive } from './CreateLedger';
+import { deleteLedger } from './DeleteLedger';
+import { error, log } from './qldb/LogUtil';
 
-const LEDGER_NAME = "deletion-protection-demo";
+const LEDGER_NAME = 'deletion-protection-demo';
 
 /**
  * Create a new ledger with the specified name and with deletion protection enabled.
@@ -38,14 +38,14 @@ const LEDGER_NAME = "deletion-protection-demo";
  * @returns Promise which fulfills with a CreateLedgerResponse.
  */
 async function createWithDeletionProtection(ledgerName: string, qldbClient: QLDB): Promise<CreateLedgerResponse> {
-    log(`Creating a ledger named: ${ledgerName}...`);
-    const request: CreateLedgerRequest = {
-        Name: ledgerName,
-        PermissionsMode: "ALLOW_ALL"
-    };
-    const result: CreateLedgerResponse = await qldbClient.createLedger(request).promise();
-    log(`Success. Ledger state: ${result.State}.`);
-    return result;
+  log(`Creating a ledger named: ${ledgerName}...`);
+  const request: CreateLedgerRequest = {
+    Name: ledgerName,
+    PermissionsMode: 'ALLOW_ALL'
+  };
+  const result: CreateLedgerResponse = await qldbClient.createLedger(request).promise();
+  log(`Success. Ledger state: ${result.State}.`);
+  return result;
 }
 
 /**
@@ -56,44 +56,44 @@ async function createWithDeletionProtection(ledgerName: string, qldbClient: QLDB
  * @returns Promise which fulfills with void.
  */
 export async function setDeletionProtection(
-    ledgerName: string, 
-    qldbClient: QLDB, 
-    deletionProtection: boolean
+  ledgerName: string,
+  qldbClient: QLDB,
+  deletionProtection: boolean
 ): Promise<void> {
-    log(`Let's set deletion protection to ${deletionProtection} for the ledger with name ${ledgerName}.`);
-    const request: UpdateLedgerRequest = {
-        Name: ledgerName,
-        DeletionProtection: deletionProtection
-    };
-    const result: UpdateLedgerResponse = await qldbClient.updateLedger(request).promise();
-    log(`Success. Ledger updated: ${JSON.stringify(result)}."`);
+  log(`Let's set deletion protection to ${deletionProtection} for the ledger with name ${ledgerName}.`);
+  const request: UpdateLedgerRequest = {
+    Name: ledgerName,
+    DeletionProtection: deletionProtection
+  };
+  const result: UpdateLedgerResponse = await qldbClient.updateLedger(request).promise();
+  log(`Success. Ledger updated: ${JSON.stringify(result)}."`);
 }
 
 /**
  * Demonstrate the protection of QLDB ledgers against deletion.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
+const main = async function (): Promise<void> {
+  try {
+    const qldbClient: QLDB = new QLDB();
+    await createWithDeletionProtection(LEDGER_NAME, qldbClient);
+    await waitForActive(LEDGER_NAME, qldbClient);
     try {
-        const qldbClient: QLDB = new QLDB();
-        await createWithDeletionProtection(LEDGER_NAME, qldbClient);
-        await waitForActive(LEDGER_NAME, qldbClient);
-        try {
-            await deleteLedger(LEDGER_NAME, qldbClient);
-        } catch (e) {
-            if (isResourcePreconditionNotMetException(e)) {
-                log("Ledger protected against deletions!");
-            } else {
-                throw e;
-            }
-        }
-        await setDeletionProtection(LEDGER_NAME, qldbClient, false);
-        await deleteLedger(LEDGER_NAME, qldbClient);
+      await deleteLedger(LEDGER_NAME, qldbClient);
     } catch (e) {
-        error(`Unable to update or delete the ledger: ${e}`);
+      if (isResourcePreconditionNotMetException(e)) {
+        log('Ledger protected against deletions!');
+      } else {
+        throw e;
+      }
     }
-}
+    await setDeletionProtection(LEDGER_NAME, qldbClient, false);
+    await deleteLedger(LEDGER_NAME, qldbClient);
+  } catch (e) {
+    error(`Unable to update or delete the ledger: ${e}`);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

@@ -16,17 +16,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QLDB } from "aws-sdk";
+import { QLDB } from 'aws-sdk';
 import {
-    JournalS3ExportDescription,
-    ListJournalS3ExportsForLedgerRequest,
-    ListJournalS3ExportsForLedgerResponse,
-    ListJournalS3ExportsRequest,
-    ListJournalS3ExportsResponse
-} from "aws-sdk/clients/qldb";
+  JournalS3ExportDescription,
+  ListJournalS3ExportsForLedgerRequest,
+  ListJournalS3ExportsForLedgerResponse,
+  ListJournalS3ExportsRequest,
+  ListJournalS3ExportsResponse
+} from 'aws-sdk/clients/qldb';
 
 import { LEDGER_NAME } from './qldb/Constants';
-import { error, log } from "./qldb/LogUtil";
+import { error, log } from './qldb/LogUtil';
 
 const MAX_RESULTS = 2;
 
@@ -36,18 +36,18 @@ const MAX_RESULTS = 2;
  * @returns Promise which fulfills with a JournalS3ExportDescription array.
  */
 async function listAllJournalExports(qldbClient: QLDB): Promise<JournalS3ExportDescription[]> {
-    const exportList: JournalS3ExportDescription[] = [];
-    let nextToken: string = null;
-    do {
-        const request: ListJournalS3ExportsRequest = {
-            MaxResults: MAX_RESULTS,
-            NextToken: nextToken
-        };
-        const result: ListJournalS3ExportsResponse = await qldbClient.listJournalS3Exports(request).promise();
-        exportList.push.apply(exportList, result.JournalS3Exports);
-        nextToken = result.NextToken;
-    } while (nextToken != null);
-    return exportList;
+  const exportList: JournalS3ExportDescription[] = [];
+  let nextToken: string = null;
+  do {
+    const request: ListJournalS3ExportsRequest = {
+      MaxResults: MAX_RESULTS,
+      NextToken: nextToken
+    };
+    const result: ListJournalS3ExportsResponse = await qldbClient.listJournalS3Exports(request).promise();
+    exportList.push.apply(exportList, result.JournalS3Exports);
+    nextToken = result.NextToken;
+  } while (nextToken != null);
+  return exportList;
 }
 
 /**
@@ -56,37 +56,36 @@ async function listAllJournalExports(qldbClient: QLDB): Promise<JournalS3ExportD
  * @returns Promise which fulfills with a JournalS3ExportDescription array.
  */
 async function listJournalExports(ledgerName: string): Promise<JournalS3ExportDescription[]> {
-    const qldbClient: QLDB = new QLDB();
-    const exportDescriptions: JournalS3ExportDescription[] = [];
-    let nextToken: string = null;
-    do {
-        const request: ListJournalS3ExportsForLedgerRequest = {
-            Name: ledgerName,
-            MaxResults: MAX_RESULTS,
-            NextToken: nextToken
-        };
-        const result: ListJournalS3ExportsForLedgerResponse =
-            await qldbClient.listJournalS3ExportsForLedger(request).promise();
-        exportDescriptions.push.apply(exportDescriptions, result.JournalS3Exports);
-        nextToken = result.NextToken;
-    } while (nextToken != null);
-    return exportDescriptions;
+  const qldbClient: QLDB = new QLDB();
+  const exportDescriptions: JournalS3ExportDescription[] = [];
+  let nextToken: string = null;
+  do {
+    const request: ListJournalS3ExportsForLedgerRequest = {
+      Name: ledgerName,
+      MaxResults: MAX_RESULTS,
+      NextToken: nextToken
+    };
+    const result: ListJournalS3ExportsForLedgerResponse = await qldbClient.listJournalS3ExportsForLedger(request).promise();
+    exportDescriptions.push.apply(exportDescriptions, result.JournalS3Exports);
+    nextToken = result.NextToken;
+  } while (nextToken != null);
+  return exportDescriptions;
 }
 
 /**
  * List the journal exports of a given QLDB ledger.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    try {
-        log(`Listing journal exports for ledger: ${LEDGER_NAME}.`);
-        const digest: JournalS3ExportDescription[] = await listJournalExports(LEDGER_NAME);
-        log(`Success. List of journal exports: ${JSON.stringify(digest)}`);
-    } catch (e) {
-        error(`Unable to list exports: ${e}`);
-    }
-}
+const main = async function (): Promise<void> {
+  try {
+    log(`Listing journal exports for ledger: ${LEDGER_NAME}.`);
+    const digest: JournalS3ExportDescription[] = await listJournalExports(LEDGER_NAME);
+    log(`Success. List of journal exports: ${JSON.stringify(digest)}`);
+  } catch (e) {
+    error(`Unable to list exports: ${e}`);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

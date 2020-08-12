@@ -16,12 +16,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { PooledQldbDriver, QldbDriver, QldbSession } from "amazon-qldb-driver-nodejs";
-import { ClientConfiguration } from "aws-sdk/clients/qldbsession";
+import { PooledQldbDriver, QldbDriver, QldbSession } from 'amazon-qldb-driver-nodejs';
+import { ClientConfiguration } from 'aws-sdk/clients/qldbsession';
 import { Request, Response, RequestHandler } from 'express';
 
-import { LEDGER_NAME } from "./qldb/Constants";
-import { error, log } from "./qldb/LogUtil";
+import { LEDGER_NAME } from './qldb/Constants';
+import { error, log } from './qldb/LogUtil';
 
 const pooledQldbDriver: QldbDriver = createQldbDriver();
 
@@ -30,9 +30,9 @@ const pooledQldbDriver: QldbDriver = createQldbDriver();
  * @param session The session to close.
  */
 export function closeQldbSession(session: QldbSession): void {
-    if (null != session) {
-        session.close();
-    }
+  if (session != null) {
+    session.close();
+  }
 }
 
 /**
@@ -42,11 +42,11 @@ export function closeQldbSession(session: QldbSession): void {
  * @returns The pooled driver for creating sessions.
  */
 export function createQldbDriver(
-    ledgerName: string = LEDGER_NAME,
-    serviceConfigurationOptions: ClientConfiguration = {}
+  ledgerName: string = LEDGER_NAME,
+  serviceConfigurationOptions: ClientConfiguration = {}
 ): QldbDriver {
-    const qldbDriver: QldbDriver = new PooledQldbDriver(ledgerName, serviceConfigurationOptions);
-    return qldbDriver;
+  const qldbDriver: QldbDriver = new PooledQldbDriver(ledgerName, serviceConfigurationOptions);
+  return qldbDriver;
 }
 
 
@@ -55,48 +55,48 @@ export function createQldbDriver(
  * @returns Promise which fufills with a {@linkcode QldbSession} object.
  */
 export async function createQldbSession(): Promise<QldbSession> {
-    const qldbSession: QldbSession = await pooledQldbDriver.getSession();
-    return qldbSession;
+  const qldbSession: QldbSession = await pooledQldbDriver.getSession();
+  return qldbSession;
 }
 
 export const connectLedger: RequestHandler = async (req: Request, res: Response) => {
   let session: QldbSession;
   try {
     session = await createQldbSession();
-    log("Listing table names...");
+    log('Listing table names...');
     const tableNames: string[] = await session.getTableNames();
     tableNames.forEach((tableName: string): void => {
-        log(tableName);
-    })
+      log(tableName);
+    });
     res.send({
-      message: "Successful ledger connection"
+      message: 'Successful ledger connection'
     }).status(200);
   } finally {
     closeQldbSession(session);
   }
-}
+};
 
 
 /**
  * Connect to a session for a given ledger using default settings.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    let session: QldbSession = null;
-    try {
-        session = await createQldbSession();
-        log("Listing table names...");
-        const tableNames: string[] = await session.getTableNames();
-        tableNames.forEach((tableName: string): void => {
-            log(tableName);
-        });
-    } catch (e) {
-        error(`Unable to create session: ${e}`);
-    } finally {
-        closeQldbSession(session);
-    }
-}
+const main = async function (): Promise<void> {
+  let session: QldbSession = null;
+  try {
+    session = await createQldbSession();
+    log('Listing table names...');
+    const tableNames: string[] = await session.getTableNames();
+    tableNames.forEach((tableName: string): void => {
+      log(tableName);
+    });
+  } catch (e) {
+    error(`Unable to create session: ${e}`);
+  } finally {
+    closeQldbSession(session);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

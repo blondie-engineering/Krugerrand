@@ -11,7 +11,7 @@
  * and limitations under the License.
  */
 
-import { config } from "aws-sdk";
+import { config } from 'aws-sdk';
 
 config.logger = console;
 
@@ -20,9 +20,9 @@ config.logger = console;
  * @param line The message to be logged.
  */
 export function error(line: string): void {
-    if (isLoggerSet()) {
-        _prepend(line, "ERROR");
-    }
+  if (isLoggerSet()) {
+    _prepend(line, 'ERROR');
+  }
 }
 
 /**
@@ -30,16 +30,16 @@ export function error(line: string): void {
  * @param line The message to be logged.
  */
 export function log(line: string): void {
-    if (isLoggerSet()) {
-        _prepend(line, "LOG");
-    }
+  if (isLoggerSet()) {
+    _prepend(line, 'LOG');
+  }
 }
 
 /**
  * @returns A boolean indicating whether a logger has been set within the AWS SDK.
  */
 export function isLoggerSet(): boolean {
-    return config.logger !== null;
+  return config.logger !== null;
 }
 
 /**
@@ -49,11 +49,11 @@ export function isLoggerSet(): boolean {
  * @param level The log level.
  */
 function _prepend(line: string, level: string): void {
-    if (config.logger) {
-        if (typeof config.logger.log === "function") {
-            config.logger.log(`[${level}][Node.js QLDB Sample Code] ${line}`);
-        } else if (typeof config.logger.write === "function") {
-            config.logger.write(`[${level}][Node.js QLDB Sample Code] ${line}\n`);
-        }
+  if (config.logger) {
+    if (typeof config.logger.log === 'function') {
+      config.logger.log(`[${level}][Node.js QLDB Sample Code] ${line}`);
+    } else if (typeof config.logger.write === 'function') {
+      config.logger.write(`[${level}][Node.js QLDB Sample Code] ${line}\n`);
     }
+  }
 }

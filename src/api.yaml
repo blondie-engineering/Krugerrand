@@ -1,0 +1,165 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  description: Optional multiline or single-line description in [CommonMark](http://commonmark.org/help/) or HTML.
+  version: 0.1.9
+servers:
+  - url: http://api.example.com/v1
+    description: Optional server description, e.g. Main (production) server
+  - url: http://staging-api.example.com
+    description: Optional server description, e.g. Internal staging server for testing
+paths:
+  /statistics/getStatistics:
+    get:
+      tags: 
+        - Statistics
+      summary: Zwraca listę statystyk.
+      description: Zwraca listę wszystkich statystyk dla wszystkich transakcji.
+      responses:
+        '200':    # status code
+          description: Tablica JSON ze statystykami dla wszystkich transakcji
+          content:
+            application/json:
+              schema: 
+                type: array
+                items: 
+                  properties:
+                    storage: 
+                      type: string
+                    operation_type: 
+                      type: string
+                    operation_time: 
+                      type: number
+                    time: 
+                      type: number 
+  /statistics/insertStatistic:
+    post: 
+      tags: 
+        - Statistics
+      summary: Tworzy nową statystykę dla danej transakcji.
+      description: Tworzy nową statystykę dla danej transakcji.
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/createLedger: 
+    get:
+      tags: 
+        - QLDB 
+      summary: Tworzy nowy Ledger.
+      description: Tworzy nowy Ledger.
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/connectLedger: 
+    get:
+      tags: 
+        - QLDB 
+      summary: Testuje połączenie z Ledgerem.
+      description: Testuje połączenie z Ledgerem.
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/createModel: 
+    get:
+      tags: 
+        - QLDB 
+      summary: Tworzy model bazy danych (tabele).
+      description: Tworzy model bazy danych (tabele).
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/findTransactionsForCompany: 
+    get:
+      tags: 
+        - QLDB 
+      summary: Wyszukuje transakcje dla danej firmy.
+      description: Wyszukuje transakcje dla danej firmy.
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/getAllTransactions: 
+    get:
+      tags: 
+        - QLDB 
+      summary: Zwraca listę wszystkich transakcji.
+      description: Zwraca listę wszystkich transakcji.
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/insertTransaction: 
+    post:
+      tags: 
+        - QLDB 
+      summary: Tworzy nową transakcję.
+      description: Tworzy nową transakcję.
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/insertDocument: 
+    post:
+      tags: 
+        - QLDB 
+      summary: Tworzy testowe transakcje.
+      description: Tworzy testowe transakcje.
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/updateTransactionStatus: 
+    get:
+      tags: 
+        - QLDB 
+      summary: Zaktualizuj status transakcji.
+      description: Zaktualizuj status transakcji.
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/history: 
+    get:
+      tags: 
+        - QLDB 
+      summary: Pokaż historię danej transakcji.
+      description: Pokaż historię danej transakcji.
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/verifyTransaction: 
+    get:
+      tags: 
+        - QLDB 
+      summary: Zweryfikuj integralność danych dla danej transakcji.
+      description: Zweryfikuj integralność danych dla danej transakcji.
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/updateAmount: 
+    get:
+      tags: 
+        - QLDB 
+      summary: Zaktualizuj wartość transakcji.
+      description: Zaktualizuj wartość transakcji.
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/deleteAllData: 
+    delete:
+      tags: 
+        - QLDB 
+      summary: Usuń wszystkie dane o transakcjach.
+      description: Usuń wszystkie dane o transakcjach.
+      responses:
+        '200':    # status code
+          description: None
+  /qldb/deleteLedger: 
+    delete:
+      tags: 
+        - QLDB 
+      summary: Usuń Ledger.
+      description: Usuń Ledger.
+      responses:
+        '200':    # status code
+          description: None
+
+          
+  
+  
+

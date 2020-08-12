@@ -16,12 +16,12 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QLDB } from "aws-sdk";
-import { GetDigestRequest, GetDigestResponse } from "aws-sdk/clients/qldb";
+import { QLDB } from 'aws-sdk';
+import { GetDigestRequest, GetDigestResponse } from 'aws-sdk/clients/qldb';
 
-import { LEDGER_NAME } from "./qldb/Constants";
-import { error, log } from "./qldb/LogUtil";
-import { digestResponseToString } from "./qldb/Util";
+import { LEDGER_NAME } from './qldb/Constants';
+import { error, log } from './qldb/LogUtil';
+import { digestResponseToString } from './qldb/Util';
 
 /**
  * Get the digest of a ledger's journal.
@@ -30,28 +30,28 @@ import { digestResponseToString } from "./qldb/Util";
  * @returns Promise which fulfills with a GetDigestResponse.
  */
 export async function getDigestResult(ledgerName: string, qldbClient: QLDB): Promise<GetDigestResponse> {
-    const request: GetDigestRequest = {
-        Name: ledgerName
-    };
-    const result: GetDigestResponse = await qldbClient.getDigest(request).promise();
-    return result;
+  const request: GetDigestRequest = {
+    Name: ledgerName
+  };
+  const result: GetDigestResponse = await qldbClient.getDigest(request).promise();
+  return result;
 }
 
 /**
  * This is an example for retrieving the digest of a particular ledger.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    try {
-        const qldbClient: QLDB = new QLDB();
-        log(`Retrieving the current digest for ledger: ${LEDGER_NAME}.`);
-        const digest: GetDigestResponse = await getDigestResult(LEDGER_NAME, qldbClient);
-        log(`Success. Ledger digest: \n${digestResponseToString(digest)}.`);
-    } catch (e) {
-        error(`Unable to get a ledger digest: ${e}`);
-    }
-}
+const main = async function (): Promise<void> {
+  try {
+    const qldbClient: QLDB = new QLDB();
+    log(`Retrieving the current digest for ledger: ${LEDGER_NAME}.`);
+    const digest: GetDigestResponse = await getDigestResult(LEDGER_NAME, qldbClient);
+    log(`Success. Ledger digest: \n${digestResponseToString(digest)}.`);
+  } catch (e) {
+    error(`Unable to get a ledger digest: ${e}`);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

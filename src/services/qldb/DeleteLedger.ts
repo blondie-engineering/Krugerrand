@@ -16,15 +16,15 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { isResourceNotFoundException } from "amazon-qldb-driver-nodejs";
-import { QLDB } from "aws-sdk";
-import { DeleteLedgerRequest, DescribeLedgerRequest } from "aws-sdk/clients/qldb";
+import { isResourceNotFoundException } from 'amazon-qldb-driver-nodejs';
+import { QLDB } from 'aws-sdk';
+import { DeleteLedgerRequest, DescribeLedgerRequest } from 'aws-sdk/clients/qldb';
 import { Request, Response, RequestHandler } from 'express';
 
-import { setDeletionProtection } from "./DeletionProtection";
-import { LEDGER_NAME } from "./qldb/Constants";
-import { error, log } from "./qldb/LogUtil";
-import { sleep } from "./qldb/Util";
+import { setDeletionProtection } from './DeletionProtection';
+import { LEDGER_NAME } from './qldb/Constants';
+import { error, log } from './qldb/LogUtil';
+import { sleep } from './qldb/Util';
 
 const LEDGER_DELETION_POLL_PERIOD_MS = 20000;
 
@@ -35,12 +35,12 @@ const LEDGER_DELETION_POLL_PERIOD_MS = 20000;
  * @returns Promise which fulfills with void.
  */
 export async function deleteLedger(ledgerName: string, qldbClient: QLDB): Promise<void> {
-    log(`Attempting to delete the ledger with name: ${ledgerName}`);
-    const request: DeleteLedgerRequest = {
-        Name: ledgerName
-    };
-    await qldbClient.deleteLedger(request).promise();
-    log("Success.");
+  log(`Attempting to delete the ledger with name: ${ledgerName}`);
+  const request: DeleteLedgerRequest = {
+    Name: ledgerName
+  };
+  await qldbClient.deleteLedger(request).promise();
+  log('Success.');
 }
 
 /**
@@ -50,55 +50,55 @@ export async function deleteLedger(ledgerName: string, qldbClient: QLDB): Promis
  * @returns Promise which fulfills with void.
  */
 export async function waitForDeleted(ledgerName: string, qldbClient: QLDB): Promise<void> {
-    log("Waiting for the ledger to be deleted...");
-    const request: DescribeLedgerRequest = {
-        Name: ledgerName
-    };
-    while (true) {
-        try {
-            await qldbClient.describeLedger(request).promise();
-            log("The ledger is still being deleted. Please wait...");
-            await sleep(LEDGER_DELETION_POLL_PERIOD_MS);
-        } catch (e) {
-            if (isResourceNotFoundException(e)) {
-                log("Success. Ledger is deleted.");
-                break;
-            } else {
-                throw e;
-            }
-        }
+  log('Waiting for the ledger to be deleted...');
+  const request: DescribeLedgerRequest = {
+    Name: ledgerName
+  };
+  while (true) {
+    try {
+      await qldbClient.describeLedger(request).promise();
+      log('The ledger is still being deleted. Please wait...');
+      await sleep(LEDGER_DELETION_POLL_PERIOD_MS);
+    } catch (e) {
+      if (isResourceNotFoundException(e)) {
+        log('Success. Ledger is deleted.');
+        break;
+      } else {
+        throw e;
+      }
     }
+  }
 }
 
 export const deleteLedgerHandler: RequestHandler = async (req: Request, res: Response) => {
   try {
-      const qldbClient: QLDB = new QLDB();
-      await setDeletionProtection(LEDGER_NAME, qldbClient, false);
-      await deleteLedger(LEDGER_NAME, qldbClient);
-      await waitForDeleted(LEDGER_NAME, qldbClient);
-      res.send({
-        message: "Successful Ledger deletion"
-      }).status(200);
+    const qldbClient: QLDB = new QLDB();
+    await setDeletionProtection(LEDGER_NAME, qldbClient, false);
+    await deleteLedger(LEDGER_NAME, qldbClient);
+    await waitForDeleted(LEDGER_NAME, qldbClient);
+    res.send({
+      message: 'Successful Ledger deletion'
+    }).status(200);
   } catch (e) {
-      throw e;
+    throw e;
   }
-}
+};
 
 /**
  * Delete a ledger.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    try {
-        const qldbClient: QLDB = new QLDB();
-        await setDeletionProtection(LEDGER_NAME, qldbClient, false);
-        await deleteLedger(LEDGER_NAME, qldbClient);
-        await waitForDeleted(LEDGER_NAME, qldbClient);
-    } catch (e) {
-        error(`Unable to delete the ledger: ${e}`);
-    }
-}
+const main = async function (): Promise<void> {
+  try {
+    const qldbClient: QLDB = new QLDB();
+    await setDeletionProtection(LEDGER_NAME, qldbClient, false);
+    await deleteLedger(LEDGER_NAME, qldbClient);
+    await waitForDeleted(LEDGER_NAME, qldbClient);
+  } catch (e) {
+    error(`Unable to delete the ledger: ${e}`);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

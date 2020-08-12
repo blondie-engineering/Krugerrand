@@ -16,11 +16,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { Digest, ValueHolder } from "aws-sdk/clients/qldb";
-import { createHash } from "crypto";
-import { makeReader, Reader, toBase64 } from "ion-js";
+import { Digest, ValueHolder } from 'aws-sdk/clients/qldb';
+import { createHash } from 'crypto';
+import { makeReader, Reader, toBase64 } from 'ion-js';
 
-import { getFieldValue } from "./Util";
+import { getFieldValue } from './Util';
 
 const HASH_LENGTH: number = 32;
 const UPPER_BOUND: number = 8;
@@ -32,9 +32,9 @@ const UPPER_BOUND: number = 8;
  * @returns The calculated root hash.
  */
 function buildCandidateDigest(proof: ValueHolder, leafHash: Uint8Array): Uint8Array {
-    const parsedProof: Uint8Array[] = parseProof(proof);
-    const rootHash: Uint8Array = calculateRootHashFromInternalHash(parsedProof, leafHash);
-    return rootHash;
+  const parsedProof: Uint8Array[] = parseProof(proof);
+  const rootHash: Uint8Array = calculateRootHashFromInternalHash(parsedProof, leafHash);
+  return rootHash;
 }
 
 /**
@@ -44,8 +44,8 @@ function buildCandidateDigest(proof: ValueHolder, leafHash: Uint8Array): Uint8Ar
  * @returns The root hash constructed by combining internal hashes.
  */
 function calculateRootHashFromInternalHash(internalHashes: Uint8Array[], leafHash: Uint8Array): Uint8Array {
-    const rootHash: Uint8Array = internalHashes.reduce(joinHashesPairwise, leafHash);
-    return rootHash;
+  const rootHash: Uint8Array = internalHashes.reduce(joinHashesPairwise, leafHash);
+  return rootHash;
 }
 
 /**
@@ -56,16 +56,16 @@ function calculateRootHashFromInternalHash(internalHashes: Uint8Array[], leafHas
  * @returns Zero if the hash values are equal, otherwise return the difference of the first pair of non-matching bytes.
  */
 function compareHashValues(hash1: Uint8Array, hash2: Uint8Array): number {
-    if (hash1.length !== HASH_LENGTH || hash2.length !== HASH_LENGTH) {
-        throw new Error("Invalid hash.");
+  if (hash1.length !== HASH_LENGTH || hash2.length !== HASH_LENGTH) {
+    throw new Error('Invalid hash.');
+  }
+  for (let i = hash1.length - 1; i >= 0; i--) {
+    const difference: number = (hash1[i] << 24 >> 24) - (hash2[i] << 24 >> 24);
+    if (difference !== 0) {
+      return difference;
     }
-    for (let i = hash1.length-1; i >= 0; i--) {
-        const difference: number = (hash1[i]<<24 >>24) - (hash2[i]<<24 >>24);
-        if (difference !== 0) {
-            return difference;
-        }
-    }
-    return 0;
+  }
+  return 0;
 }
 
 /**
@@ -74,17 +74,17 @@ function compareHashValues(hash1: Uint8Array, hash2: Uint8Array): number {
  * @returns The concatenated array.
  */
 function concatenate(...arrays: Uint8Array[]): Uint8Array {
-    let totalLength = 0;
-    for (const arr of arrays) {
-        totalLength += arr.length;
-    }
-    const result = new Uint8Array(totalLength);
-    let offset = 0;
-    for (const arr of arrays) {
-        result.set(arr, offset);
-        offset += arr.length;
-    }
-    return result;
+  let totalLength = 0;
+  for (const arr of arrays) {
+    totalLength += arr.length;
+  }
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const arr of arrays) {
+    result.set(arr, offset);
+    offset += arr.length;
+  }
+  return result;
 }
 
 /**
@@ -94,15 +94,15 @@ function concatenate(...arrays: Uint8Array[]): Uint8Array {
  * @returns The altered hash with a single random bit changed.
  */
 export function flipRandomBit(original: any): Uint8Array {
-    if (original.length === 0) {
-        throw new Error("Array cannot be empty!");
-    }
-    const bytePos: number = Math.floor(Math.random() * original.length);
-    const bitShift: number = Math.floor(Math.random() * UPPER_BOUND);
-    const alteredHash: Uint8Array = original;
+  if (original.length === 0) {
+    throw new Error('Array cannot be empty!');
+  }
+  const bytePos: number = Math.floor(Math.random() * original.length);
+  const bitShift: number = Math.floor(Math.random() * UPPER_BOUND);
+  const alteredHash: Uint8Array = original;
 
-    alteredHash[bytePos] = alteredHash[bytePos] ^ (1 << bitShift);
-    return alteredHash;
+  alteredHash[bytePos] = alteredHash[bytePos] ^ (1 << bitShift);
+  return alteredHash;
 }
 
 /**
@@ -112,22 +112,22 @@ export function flipRandomBit(original: any): Uint8Array {
  * @returns The concatenated array of hashes.
  */
 export function joinHashesPairwise(h1: Uint8Array, h2: Uint8Array): Uint8Array {
-    if (h1.length === 0) {
-        return h2;
-    }
-    if (h2.length === 0) {
-        return h1;
-    }
-    let concat: Uint8Array;
-    if (compareHashValues(h1, h2) < 0) {
-        concat = concatenate(h1, h2);
-    } else {
-        concat = concatenate(h2, h1);
-    }
-    const hash = createHash('sha256');
-    hash.update(concat);
-    const newDigest: Uint8Array = hash.digest();
-    return newDigest;
+  if (h1.length === 0) {
+    return h2;
+  }
+  if (h2.length === 0) {
+    return h1;
+  }
+  let concat: Uint8Array;
+  if (compareHashValues(h1, h2) < 0) {
+    concat = concatenate(h1, h2);
+  } else {
+    concat = concatenate(h2, h1);
+  }
+  const hash = createHash('sha256');
+  hash.update(concat);
+  const newDigest: Uint8Array = hash.digest();
+  return newDigest;
 }
 
 /**
@@ -136,10 +136,10 @@ export function joinHashesPairwise(h1: Uint8Array, h2: Uint8Array): Uint8Array {
  * @returns The block hash.
  */
 export function parseBlock(valueHolder: ValueHolder): Uint8Array {
-    const blockText: string = valueHolder.IonText;
-    const r: Reader = makeReader(blockText);
-    const blockHash: Uint8Array = getFieldValue(r, ["blockHash"]);
-    return blockHash;
+  const blockText: string = valueHolder.IonText;
+  const r: Reader = makeReader(blockText);
+  const blockHash: Uint8Array = getFieldValue(r, ['blockHash']);
+  return blockHash;
 }
 
 /**
@@ -150,21 +150,21 @@ export function parseBlock(valueHolder: ValueHolder): Uint8Array {
  * @returns A list of hash values.
  */
 function parseProof(valueHolder: ValueHolder): Uint8Array[] {
-    let proofList: string = valueHolder.IonText;
-    const r: Reader = makeReader(proofList);
+  let proofList: string = valueHolder.IonText;
+  const r: Reader = makeReader(proofList);
+  r.next();
+  r.stepIn();
+
+  proofList = proofList.replace(']', '');
+  proofList = proofList.replace('[', '');
+  const array: string[] = proofList.split(',');
+
+  const byteArray: Uint8Array[] = [];
+  for (let i = 0; i < array.length; i++) {
     r.next();
-    r.stepIn();
-
-    proofList = proofList.replace("]", "");
-    proofList = proofList.replace("[", "");
-    const array: string[] = proofList.split(",");
-
-    const byteArray: Uint8Array[] = [];
-    for (let i = 0; i < array.length; i++) {
-        r.next();
-        byteArray.push(r.byteValue());
-    }
-    return byteArray;
+    byteArray.push(r.byteValue());
+  }
+  return byteArray;
 }
 
 /**
@@ -175,6 +175,6 @@ function parseProof(valueHolder: ValueHolder): Uint8Array[] {
  * @returns If the document revision verifies against the ledger digest.
  */
 export function verifyDocument(documentHash: Uint8Array, digest: Digest, proof: ValueHolder): boolean {
-    const candidateDigest = buildCandidateDigest(proof, documentHash);
-    return (toBase64(<Uint8Array> digest) === toBase64(candidateDigest));
+  const candidateDigest = buildCandidateDigest(proof, documentHash);
+  return (toBase64(<Uint8Array> digest) === toBase64(candidateDigest));
 }

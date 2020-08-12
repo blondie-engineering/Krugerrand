@@ -19,22 +19,22 @@
 /**
  * Constant values used throughout this tutorial.
  */
-export const LEDGER_NAME = "krugerrand";
-export const LEDGER_NAME_WITH_TAGS = "tags";
+export const LEDGER_NAME = 'krugerrand';
+export const LEDGER_NAME_WITH_TAGS = 'tags';
 
-export const AD_DATA_TABLE_NAME = "AdData";
-export const DRIVERS_LICENSE_TABLE_NAME = "License";
-export const PERSON_TABLE_NAME = "Person";
-export const VEHICLE_REGISTRATION_TABLE_NAME = "VehicleRegistration";
-export const VEHICLE_TABLE_NAME = "Vehicle";
+export const AD_DATA_TABLE_NAME = 'AdData';
+export const DRIVERS_LICENSE_TABLE_NAME = 'License';
+export const PERSON_TABLE_NAME = 'Person';
+export const VEHICLE_REGISTRATION_TABLE_NAME = 'VehicleRegistration';
+export const VEHICLE_TABLE_NAME = 'Vehicle';
 
-export const COMPANY_INDEX_NAME = "Company";
-export const LICENSE_NUMBER_INDEX_NAME = "LicenseNumber";
-export const LICENSE_PLATE_NUMBER_INDEX_NAME = "LicensePlateNumber";
-export const PERSON_ID_INDEX_NAME = "PersonId";
-export const VIN_INDEX_NAME = "VIN";
+export const COMPANY_INDEX_NAME = 'Company';
+export const LICENSE_NUMBER_INDEX_NAME = 'LicenseNumber';
+export const LICENSE_PLATE_NUMBER_INDEX_NAME = 'LicensePlateNumber';
+export const PERSON_ID_INDEX_NAME = 'PersonId';
+export const VIN_INDEX_NAME = 'VIN';
 
 export const RETRY_LIMIT = 4;
 
-export const JOURNAL_EXPORT_S3_BUCKET_NAME_PREFIX = "qldb-tutorial-journal-export";
-export const USER_TABLES = "information_schema.user_tables";
+export const JOURNAL_EXPORT_S3_BUCKET_NAME_PREFIX = 'qldb-tutorial-journal-export';
+export const USER_TABLES = 'information_schema.user_tables';

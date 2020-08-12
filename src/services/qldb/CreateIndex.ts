@@ -16,14 +16,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QldbSession, TransactionExecutor } from "amazon-qldb-driver-nodejs";
+import { QldbSession, TransactionExecutor } from 'amazon-qldb-driver-nodejs';
 
-import { closeQldbSession, createQldbSession } from "./ConnectToLedger";
+import { closeQldbSession, createQldbSession } from './ConnectToLedger';
 import {
-    AD_DATA_TABLE_NAME,
-    COMPANY_INDEX_NAME
-} from "./qldb/Constants";
-import { error, log } from "./qldb/LogUtil";
+  AD_DATA_TABLE_NAME,
+  COMPANY_INDEX_NAME
+} from './qldb/Constants';
+import { error, log } from './qldb/LogUtil';
 
 /**
  * Create an index for a particular table.
@@ -33,37 +33,37 @@ import { error, log } from "./qldb/LogUtil";
  * @returns Promise which fulfills with the number of changes to the database.
  */
 export async function createIndex(
-    txn: TransactionExecutor,
-    tableName: string,
-    indexAttribute: string
+  txn: TransactionExecutor,
+  tableName: string,
+  indexAttribute: string
 ): Promise<number> {
-    const statement: string = `CREATE INDEX on ${tableName} (${indexAttribute})`;
-    return await txn.executeInline(statement).then((result) => {
-        log(`Successfully created index ${indexAttribute} on table ${tableName}.`);
-        return result.getResultList().length;
-    });
+  const statement: string = `CREATE INDEX on ${tableName} (${indexAttribute})`;
+  return await txn.executeInline(statement).then((result) => {
+    log(`Successfully created index ${indexAttribute} on table ${tableName}.`);
+    return result.getResultList().length;
+  });
 }
 
 /**
  * Create indexes on tables in a particular ledger.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    let session: QldbSession;
-    try {
-        session = await createQldbSession();
-        await session.executeLambda(async (txn) => {
-            Promise.all([
-                createIndex(txn, AD_DATA_TABLE_NAME, COMPANY_INDEX_NAME)
-            ]);
-        }, () => log("Retrying due to OCC conflict..."));
-    } catch (e) {
-        error(`Unable to create indexes: ${e}`);
-    } finally {
-        closeQldbSession(session);
-    }
-}
+const main = async function (): Promise<void> {
+  let session: QldbSession;
+  try {
+    session = await createQldbSession();
+    await session.executeLambda(async (txn) => {
+      Promise.all([
+        createIndex(txn, AD_DATA_TABLE_NAME, COMPANY_INDEX_NAME)
+      ]);
+    }, () => log('Retrying due to OCC conflict...'));
+  } catch (e) {
+    error(`Unable to create indexes: ${e}`);
+  } finally {
+    closeQldbSession(session);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

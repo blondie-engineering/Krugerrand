@@ -16,15 +16,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { createQldbWriter, QldbSession, QldbWriter, Result, TransactionExecutor } from "amazon-qldb-driver-nodejs";
-import { Reader } from "ion-js";
+import {
+  createQldbWriter, QldbSession, QldbWriter, Result, TransactionExecutor
+} from 'amazon-qldb-driver-nodejs';
+import { Reader } from 'ion-js';
 
-import { closeQldbSession, createQldbSession } from "./ConnectToLedger";
-import { AD_DATA_TRANSACTIONS } from "./model/SampleData";
-import { AD_DATA_TABLE_NAME } from "./qldb/Constants";
-import { error, log } from "./qldb/LogUtil";
-import { getDocumentId, getFieldValue, writeValueAsIon } from "./qldb/Util";
 import { Request, Response, RequestHandler } from 'express';
+import { closeQldbSession, createQldbSession } from './ConnectToLedger';
+import { AD_DATA_TRANSACTIONS } from './model/SampleData';
+import { AD_DATA_TABLE_NAME } from './qldb/Constants';
+import { error, log } from './qldb/LogUtil';
+import { getDocumentId, getFieldValue, writeValueAsIon } from './qldb/Util';
 /**
  * Query a driver's information using the given ID.
  * @param txn The {@linkcode TransactionExecutor} for lambda execute.
@@ -33,38 +35,35 @@ import { Request, Response, RequestHandler } from 'express';
  */
 
 
-
-
 export async function updateTransactionAmountForCompany(txn: TransactionExecutor, id: string, amount: number): Promise<void> {
+  const statement: string = `UPDATE AdData BY id SET amount = amount + ${amount} WHERE id = ?`;
 
-    const statement: string = `UPDATE AdData BY id SET amount = amount + ${amount} WHERE id = ?`;
+  const writer: QldbWriter = createQldbWriter();
+  writeValueAsIon(id, writer);
 
-    const writer: QldbWriter = createQldbWriter();
-    writeValueAsIon(id, writer);
-
-    log(`Updating the inEth status for company with id : ${id}...`);
-    await txn.executeInline(statement, [writer]).then((result: Result) => {
-        const resultList: Reader[] = result.getResultList();
-        if (resultList.length === 0) {
-            throw new Error("Unable to update company status, could not find company.");
-        }
-        log(`Successfully updated transaction with id ${id} to new amount.`);
-    });
+  log(`Updating the inEth status for company with id : ${id}...`);
+  await txn.executeInline(statement, [writer]).then((result: Result) => {
+    const resultList: Reader[] = result.getResultList();
+    if (resultList.length === 0) {
+      throw new Error('Unable to update company status, could not find company.');
+    }
+    log(`Successfully updated transaction with id ${id} to new amount.`);
+  });
 }
 
 export const updateTransactionAmountForCompanyHandler: RequestHandler = async (req: Request, res: Response) => {
   let session: QldbSession;
   try {
-      session = await createQldbSession();
-      const id: string = req.query.id;
-      const amount: number = req.query.amount;
-      await session.executeLambda(async (txn) => {
-          await updateTransactionAmountForCompany(txn, id, amount);
-      }, () => log("Retrying due to OCC conflict..."));
-      res.send({ message: "Successfully updated amount"}).status(200);
-  } catch(err) {
-      res.sendStatus(err.statusCode || 500);
+    session = await createQldbSession();
+    const { id } = req.query;
+    const { amount } = req.query;
+    await session.executeLambda(async (txn) => {
+      await updateTransactionAmountForCompany(txn, id, amount);
+    }, () => log('Retrying due to OCC conflict...'));
+    res.send({ message: 'Successfully updated amount' }).status(200);
+  } catch (err) {
+    res.sendStatus(err.statusCode || 500);
   } finally {
-      closeQldbSession(session);
+    closeQldbSession(session);
   }
-}
+};

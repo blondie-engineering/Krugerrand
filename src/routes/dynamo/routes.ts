@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as DynamoController from '../../controllers/dynamo'
+import * as DynamoController from '../../controllers/dynamo';
 
 const router: Router = Router();
 

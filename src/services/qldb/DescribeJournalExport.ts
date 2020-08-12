@@ -16,14 +16,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QLDB } from "aws-sdk";
+import { QLDB } from 'aws-sdk';
 import {
-    DescribeJournalS3ExportRequest,
-    DescribeJournalS3ExportResponse,
-} from "aws-sdk/clients/qldb";
+  DescribeJournalS3ExportRequest,
+  DescribeJournalS3ExportResponse
+} from 'aws-sdk/clients/qldb';
 
 import { LEDGER_NAME } from './qldb/Constants';
-import { error, log } from "./qldb/LogUtil";
+import { error, log } from './qldb/LogUtil';
 
 /**
  * Describe a journal export.
@@ -33,38 +33,38 @@ import { error, log } from "./qldb/LogUtil";
  * @returns Promise which fulfills with a DescribeJournalS3ExportResponse.
  */
 export async function describeJournalExport(
-    ledgerName: string, 
-    exportId: string,
-    qldbClient: QLDB
+  ledgerName: string,
+  exportId: string,
+  qldbClient: QLDB
 ): Promise<DescribeJournalS3ExportResponse> {
-    log(`Describing a journal export for ledger with name: ${ledgerName}, ExportId: ${exportId}.`);
-    const request: DescribeJournalS3ExportRequest = {
-        Name: LEDGER_NAME,
-        ExportId: exportId
-    };
-    const exportResult: DescribeJournalS3ExportResponse = await qldbClient.describeJournalS3Export(request).promise();
-    log(`Export described. Result = ${JSON.stringify(exportResult)}`);
-    return exportResult;
+  log(`Describing a journal export for ledger with name: ${ledgerName}, ExportId: ${exportId}.`);
+  const request: DescribeJournalS3ExportRequest = {
+    Name: LEDGER_NAME,
+    ExportId: exportId
+  };
+  const exportResult: DescribeJournalS3ExportResponse = await qldbClient.describeJournalS3Export(request).promise();
+  log(`Export described. Result = ${JSON.stringify(exportResult)}`);
+  return exportResult;
 }
 
 /**
  * Describe a specific journal export with the given ExportId.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    const qldbClient: QLDB = new QLDB();
-    try {
-        if (process.argv.length !== 3) {
-            throw new ReferenceError("Missing ExportId argument in DescribeJournalExport.");
-        }
-        const exportId: string = process.argv[2].toString();
-        log(`Running describe export journal tutorial with ExportId: ${exportId}.`);
-        await describeJournalExport(LEDGER_NAME, exportId, qldbClient);
-    } catch (e) {
-        error(`Unable to describe an export: ${e}`);
+const main = async function (): Promise<void> {
+  const qldbClient: QLDB = new QLDB();
+  try {
+    if (process.argv.length !== 3) {
+      throw new ReferenceError('Missing ExportId argument in DescribeJournalExport.');
     }
-}
+    const exportId: string = process.argv[2].toString();
+    log(`Running describe export journal tutorial with ExportId: ${exportId}.`);
+    await describeJournalExport(LEDGER_NAME, exportId, qldbClient);
+  } catch (e) {
+    error(`Unable to describe an export: ${e}`);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

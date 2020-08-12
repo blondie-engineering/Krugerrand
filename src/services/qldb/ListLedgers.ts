@@ -16,10 +16,10 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QLDB } from "aws-sdk";
-import { LedgerSummary, ListLedgersRequest, ListLedgersResponse } from "aws-sdk/clients/qldb";
+import { QLDB } from 'aws-sdk';
+import { LedgerSummary, ListLedgersRequest, ListLedgersResponse } from 'aws-sdk/clients/qldb';
 
-import { error, log } from "./qldb/LogUtil";
+import { error, log } from './qldb/LogUtil';
 
 /**
  * List all ledgers.
@@ -27,34 +27,34 @@ import { error, log } from "./qldb/LogUtil";
  * @returns Promise which fulfills with a LedgerSummary array.
  */
 export async function listLedgers(qldbClient: QLDB): Promise<LedgerSummary[]> {
-    const ledgerSummaries: LedgerSummary[] = [];
-    let nextToken: string = null;
-    do {
-        const request: ListLedgersRequest = {
-            NextToken: nextToken
-        };
-        const result: ListLedgersResponse = await qldbClient.listLedgers(request).promise();
-        ledgerSummaries.push.apply(ledgerSummaries, result.Ledgers);
-        nextToken = result.NextToken;
-    } while (nextToken != null);
-    return ledgerSummaries;
+  const ledgerSummaries: LedgerSummary[] = [];
+  let nextToken: string = null;
+  do {
+    const request: ListLedgersRequest = {
+      NextToken: nextToken
+    };
+    const result: ListLedgersResponse = await qldbClient.listLedgers(request).promise();
+    ledgerSummaries.push.apply(ledgerSummaries, result.Ledgers);
+    nextToken = result.NextToken;
+  } while (nextToken != null);
+  return ledgerSummaries;
 }
 
 /**
  * List all QLDB ledgers in a given account.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    try {
-        const qldbClient: QLDB = new QLDB();
-        log("Retrieving all the ledgers...");
-        const result: LedgerSummary[] = await listLedgers(qldbClient);
-        log(`Success. List of ledgers: ${JSON.stringify(result)}`);
-    } catch (e) {
-        error(`Unable to list ledgers: ${e}`);
-    }
-}
+const main = async function (): Promise<void> {
+  try {
+    const qldbClient: QLDB = new QLDB();
+    log('Retrieving all the ledgers...');
+    const result: LedgerSummary[] = await listLedgers(qldbClient);
+    log(`Success. List of ledgers: ${JSON.stringify(result)}`);
+  } catch (e) {
+    error(`Unable to list ledgers: ${e}`);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

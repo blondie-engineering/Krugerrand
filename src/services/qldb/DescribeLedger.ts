@@ -16,11 +16,11 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QLDB } from "aws-sdk";
-import { DescribeLedgerRequest, DescribeLedgerResponse } from "aws-sdk/clients/qldb";
+import { QLDB } from 'aws-sdk';
+import { DescribeLedgerRequest, DescribeLedgerResponse } from 'aws-sdk/clients/qldb';
 
-import { LEDGER_NAME } from "./qldb/Constants";
-import { error, log } from "./qldb/LogUtil";
+import { LEDGER_NAME } from './qldb/Constants';
+import { error, log } from './qldb/LogUtil';
 
 /**
  * Describe a ledger.
@@ -29,27 +29,27 @@ import { error, log } from "./qldb/LogUtil";
  * @returns Promise which fulfills with a DescribeLedgerResponse.
  */
 export async function describeLedger(ledgerName: string, qldbClient: QLDB): Promise<DescribeLedgerResponse> {
-    const request: DescribeLedgerRequest = {
-        Name: ledgerName
-    };
-    const result: DescribeLedgerResponse = await qldbClient.describeLedger(request).promise();
-    log(`Success. Ledger description: ${JSON.stringify(result)}`);
-    return result;
+  const request: DescribeLedgerRequest = {
+    Name: ledgerName
+  };
+  const result: DescribeLedgerResponse = await qldbClient.describeLedger(request).promise();
+  log(`Success. Ledger description: ${JSON.stringify(result)}`);
+  return result;
 }
 
 /**
  * Describe a QLDB ledger.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    try {    
-        const qldbClient: QLDB = new QLDB();
-        await describeLedger(LEDGER_NAME, qldbClient);
-    } catch (e) {
-        error(`Unable to describe a ledger: ${e}`);
-    }
-}
+const main = async function (): Promise<void> {
+  try {
+    const qldbClient: QLDB = new QLDB();
+    await describeLedger(LEDGER_NAME, qldbClient);
+  } catch (e) {
+    error(`Unable to describe a ledger: ${e}`);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

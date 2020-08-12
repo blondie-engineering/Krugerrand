@@ -16,15 +16,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { createQldbWriter, QldbSession, QldbWriter, Result, TransactionExecutor } from "amazon-qldb-driver-nodejs";
-import { Reader } from "ion-js";
+import {
+  createQldbWriter, QldbSession, QldbWriter, Result, TransactionExecutor
+} from 'amazon-qldb-driver-nodejs';
+import { Reader } from 'ion-js';
 
-import { closeQldbSession, createQldbSession } from "./ConnectToLedger";
-import { AD_DATA_TRANSACTIONS } from "./model/SampleData";
-import { AD_DATA_TABLE_NAME } from "./qldb/Constants";
-import { error, log } from "./qldb/LogUtil";
-import { getDocumentId, getFieldValue, writeValueAsIon } from "./qldb/Util";
 import { Request, Response, RequestHandler } from 'express';
+import { closeQldbSession, createQldbSession } from './ConnectToLedger';
+import { AD_DATA_TRANSACTIONS } from './model/SampleData';
+import { AD_DATA_TABLE_NAME } from './qldb/Constants';
+import { error, log } from './qldb/LogUtil';
+import { getDocumentId, getFieldValue, writeValueAsIon } from './qldb/Util';
 
 /**
  * Query a driver's information using the given ID.
@@ -34,32 +36,32 @@ import { Request, Response, RequestHandler } from 'express';
  */
 
 export async function deleteData(txn: TransactionExecutor): Promise<void> {
-    const statement: string = "DELETE FROM AdData ";
+  const statement: string = 'DELETE FROM AdData ';
 
-    const writer: QldbWriter = createQldbWriter();
-    writeValueAsIon([], writer);
+  const writer: QldbWriter = createQldbWriter();
+  writeValueAsIon([], writer);
 
-    log(`Delete all data`);
-    await txn.executeInline(statement, []).then((result: Result) => {
-        const resultList: Reader[] = result.getResultList();
-        if (resultList.length === 0) {
-            throw new Error("Unable to delete.");
-        }
-        log(`Successfully deleted data`);
-    });
+  log('Delete all data');
+  await txn.executeInline(statement, []).then((result: Result) => {
+    const resultList: Reader[] = result.getResultList();
+    if (resultList.length === 0) {
+      throw new Error('Unable to delete.');
+    }
+    log('Successfully deleted data');
+  });
 }
 
 export const deleteDataHandler: RequestHandler = async (req: Request, res: Response) => {
   let session: QldbSession;
   try {
-      session = await createQldbSession();
-      await session.executeLambda(async (txn) => {
-          await deleteData(txn);
-      }, () => log("Retrying due to OCC conflict..."));
-      res.send({ message: "Successfully deleted data"}).status(200);
-  } catch(err) {
+    session = await createQldbSession();
+    await session.executeLambda(async (txn) => {
+      await deleteData(txn);
+    }, () => log('Retrying due to OCC conflict...'));
+    res.send({ message: 'Successfully deleted data' }).status(200);
+  } catch (err) {
     res.sendStatus(err.statusCode);
   } finally {
     closeQldbSession(session);
   }
-}
+};

@@ -16,15 +16,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { createQldbWriter, QldbSession, QldbWriter, Result, TransactionExecutor } from "amazon-qldb-driver-nodejs";
-import { Reader } from "ion-js";
+import {
+  createQldbWriter, QldbSession, QldbWriter, Result, TransactionExecutor
+} from 'amazon-qldb-driver-nodejs';
+import { Reader } from 'ion-js';
 
-import { closeQldbSession, createQldbSession } from "./ConnectToLedger";
-import { AD_DATA_TRANSACTIONS } from "./model/SampleData";
-import { AD_DATA_TABLE_NAME } from "./qldb/Constants";
-import { error, log } from "./qldb/LogUtil";
-import { getDocumentId, getFieldValue, writeValueAsIon } from "./qldb/Util";
 import { Request, Response, RequestHandler } from 'express';
+import { closeQldbSession, createQldbSession } from './ConnectToLedger';
+import { AD_DATA_TRANSACTIONS } from './model/SampleData';
+import { AD_DATA_TABLE_NAME } from './qldb/Constants';
+import { error, log } from './qldb/LogUtil';
+import { getDocumentId, getFieldValue, writeValueAsIon } from './qldb/Util';
 
 /**
  * Query a driver's information using the given ID.
@@ -34,37 +36,37 @@ import { Request, Response, RequestHandler } from 'express';
  */
 
 export async function updateTransactionStatusForCompany(txn: TransactionExecutor, id: string, ethAddress: string): Promise<void> {
-    const statement: string = `UPDATE AdData BY id SET inEth = true, ethAddress='${ethAddress}' WHERE id='${id}'`;
-    console.log(statement);
+  const statement: string = `UPDATE AdData BY id SET inEth = true, ethAddress='${ethAddress}' WHERE id='${id}'`;
+  console.log(statement);
 
-    const writer: QldbWriter = createQldbWriter();
+  const writer: QldbWriter = createQldbWriter();
 
-    log(`Updating the inEth status for id: ${id}...`);
-    await txn.executeInline(statement, []).then((result: Result) => {
-        const resultList: Reader[] = result.getResultList();
-        if (resultList.length === 0) {
-            throw new Error("Unable to update company status, could not find company.");
-        }
-        log(`Successfully updated transaction with id ${id} to new status.`);
-    });
+  log(`Updating the inEth status for id: ${id}...`);
+  await txn.executeInline(statement, []).then((result: Result) => {
+    const resultList: Reader[] = result.getResultList();
+    if (resultList.length === 0) {
+      throw new Error('Unable to update company status, could not find company.');
+    }
+    log(`Successfully updated transaction with id ${id} to new status.`);
+  });
 }
 
 export const updateTransactionHandler: RequestHandler = async (req: Request, res: Response) => {
   let session: QldbSession;
   try {
-      session = await createQldbSession();
-      const id: string = req.query.id;
-      const ethAddress: string = req.query.ethAddress;
-      await session.executeLambda(async (txn) => {
-          await updateTransactionStatusForCompany(txn, id, ethAddress);
-      }, () => log("Retrying due to OCC conflict..."));
-      res.send({ message: "Successfully updated status"}).status(200);
-  } catch(err) {
-      res.sendStatus(err.statusCode || 500);
+    session = await createQldbSession();
+    const { id } = req.query;
+    const { ethAddress } = req.query;
+    await session.executeLambda(async (txn) => {
+      await updateTransactionStatusForCompany(txn, id, ethAddress);
+    }, () => log('Retrying due to OCC conflict...'));
+    res.send({ message: 'Successfully updated status' }).status(200);
+  } catch (err) {
+    res.sendStatus(err.statusCode || 500);
   } finally {
-      closeQldbSession(session);
+    closeQldbSession(session);
   }
-}
+};
 
 
 /**
@@ -72,23 +74,23 @@ export const updateTransactionHandler: RequestHandler = async (req: Request, res
  * Transfer to another primary owner for a particular vehicle's VIN.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    let session: QldbSession;
-    try {
-        session = await createQldbSession();
+const main = async function (): Promise<void> {
+  let session: QldbSession;
+  try {
+    session = await createQldbSession();
 
-        const company: string = AD_DATA_TRANSACTIONS[0].company;
+    const { company } = AD_DATA_TRANSACTIONS[0];
 
-        await session.executeLambda(async (txn) => {
-            await updateTransactionStatusForCompany(txn, company, null);
-        }, () => log("Retrying due to OCC conflict..."));
-    } catch (e) {
-        error(`Unable to connect and run queries: ${e}`);
-    } finally {
-        closeQldbSession(session);
-    }
-}
+    await session.executeLambda(async (txn) => {
+      await updateTransactionStatusForCompany(txn, company, null);
+    }, () => log('Retrying due to OCC conflict...'));
+  } catch (e) {
+    error(`Unable to connect and run queries: ${e}`);
+  } finally {
+    closeQldbSession(session);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

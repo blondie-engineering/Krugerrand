@@ -16,57 +16,59 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { isInvalidParameterException } from "amazon-qldb-driver-nodejs";
-import { IAM, QLDB, S3, STS } from "aws-sdk";
+import { isInvalidParameterException } from 'amazon-qldb-driver-nodejs';
 import {
-    AttachRolePolicyRequest,
-    CreatePolicyRequest,
-    CreatePolicyResponse,
-    CreateRoleRequest,
-    CreateRoleResponse,
-    GetRoleRequest,
-} from "aws-sdk/clients/iam";
+  IAM, QLDB, S3, STS
+} from 'aws-sdk';
 import {
-    ExportJournalToS3Request,
-    ExportJournalToS3Response,
-    JournalS3ExportDescription,
-    S3EncryptionConfiguration
-} from "aws-sdk/clients/qldb";
-import { CreateBucketRequest, HeadBucketRequest } from "aws-sdk/clients/s3";
-import { GetCallerIdentityRequest, GetCallerIdentityResponse } from "aws-sdk/clients/sts";
+  AttachRolePolicyRequest,
+  CreatePolicyRequest,
+  CreatePolicyResponse,
+  CreateRoleRequest,
+  CreateRoleResponse,
+  GetRoleRequest
+} from 'aws-sdk/clients/iam';
+import {
+  ExportJournalToS3Request,
+  ExportJournalToS3Response,
+  JournalS3ExportDescription,
+  S3EncryptionConfiguration
+} from 'aws-sdk/clients/qldb';
+import { CreateBucketRequest, HeadBucketRequest } from 'aws-sdk/clients/s3';
+import { GetCallerIdentityRequest, GetCallerIdentityResponse } from 'aws-sdk/clients/sts';
 
 import { describeJournalExport } from './DescribeJournalExport';
 import { JOURNAL_EXPORT_S3_BUCKET_NAME_PREFIX, LEDGER_NAME } from './qldb/Constants';
-import { error, log } from "./qldb/LogUtil";
-import { sleep } from "./qldb/Util";
+import { error, log } from './qldb/LogUtil';
+import { sleep } from './qldb/Util';
 
-const EXPORT_ROLE_NAME = "QLDBTutorialJournalExportRole";
-const ROLE_POLICY_NAME = "QLDBTutorialJournalExportRolePolicy";
+const EXPORT_ROLE_NAME = 'QLDBTutorialJournalExportRole';
+const ROLE_POLICY_NAME = 'QLDBTutorialJournalExportRolePolicy';
 const MAX_RETRY_COUNT = 40;
 const EXPORT_COMPLETION_POLL_PERIOD_MS = 10000;
-const EMPTY_ARRAY: any[] = []
+const EMPTY_ARRAY: any[] = [];
 const POLICY_TEMPLATE = {
-    Version: "2012-10-17",
-    Statement: EMPTY_ARRAY
+  Version: '2012-10-17',
+  Statement: EMPTY_ARRAY
 };
 const ASSUME_ROLE_POLICY_TEMPLATE = {
-    Effect: "Allow",
-    Principal: {
-        Service: ["qldb.amazonaws.com"]
-    },
-    Action: ["sts:AssumeRole"]
+  Effect: 'Allow',
+  Principal: {
+    Service: ['qldb.amazonaws.com']
+  },
+  Action: ['sts:AssumeRole']
 };
 const EXPORT_ROLE_S3_STATEMENT_TEMPLATE = {
-    Sid: "QLDBJournalExportPermission",
-    Effect: "Allow",
-    Action: ["s3:PutObjectAcl", "s3:PutObject"],
-    Resource: "arn:aws:s3:::{bucket_name}/*"
+  Sid: 'QLDBJournalExportPermission',
+  Effect: 'Allow',
+  Action: ['s3:PutObjectAcl', 's3:PutObject'],
+  Resource: 'arn:aws:s3:::{bucket_name}/*'
 };
 const EXPORT_ROLE_KMS_STATEMENT_TEMPLATE = {
-    Sid: "QLDBJournalExportPermission",
-    Effect: "Allow",
-    Action: ["kms:GenerateDataKey"],
-    Resource: "{kms_arn}"
+  Sid: 'QLDBJournalExportPermission',
+  Effect: 'Allow',
+  Action: ['kms:GenerateDataKey'],
+  Resource: '{kms_arn}'
 };
 
 /**
@@ -83,40 +85,40 @@ const EXPORT_ROLE_KMS_STATEMENT_TEMPLATE = {
  * @returns Promise which fulfills with a ExportJournalToS3Response.
  */
 async function createExport(
-    ledgerName: string,
-    startTime: Date,
-    endTime: Date,
-    s3BucketName: string,
-    s3Prefix: string,
-    encryptionConfig: S3EncryptionConfiguration,
-    roleArn: string,
-    qldbClient: QLDB
+  ledgerName: string,
+  startTime: Date,
+  endTime: Date,
+  s3BucketName: string,
+  s3Prefix: string,
+  encryptionConfig: S3EncryptionConfiguration,
+  roleArn: string,
+  qldbClient: QLDB
 ): Promise<ExportJournalToS3Response> {
-    log(`Let's create a journal export for ledger with name: ${ledgerName}`);
-    try {
-        const request: ExportJournalToS3Request = {
-            Name: ledgerName,
-            InclusiveStartTime: startTime,
-            ExclusiveEndTime: endTime,
-            S3ExportConfiguration: {
-                Bucket: s3BucketName,
-                Prefix: s3Prefix,
-                EncryptionConfiguration: encryptionConfig
-            },
-            RoleArn: roleArn
-        };
-        const result: ExportJournalToS3Response = await qldbClient.exportJournalToS3(request).promise();
-        log("Requested QLDB to export contents of the journal.");
-        return result;
-    } catch (e) {
-        if (isInvalidParameterException(e)) {
-            error(
-                "The eventually consistent behavior of the IAM service may cause this export to fail its first " +
-                "attempts, please retry."
-            );
-        }
-        throw e;
+  log(`Let's create a journal export for ledger with name: ${ledgerName}`);
+  try {
+    const request: ExportJournalToS3Request = {
+      Name: ledgerName,
+      InclusiveStartTime: startTime,
+      ExclusiveEndTime: endTime,
+      S3ExportConfiguration: {
+        Bucket: s3BucketName,
+        Prefix: s3Prefix,
+        EncryptionConfiguration: encryptionConfig
+      },
+      RoleArn: roleArn
+    };
+    const result: ExportJournalToS3Response = await qldbClient.exportJournalToS3(request).promise();
+    log('Requested QLDB to export contents of the journal.');
+    return result;
+  } catch (e) {
+    if (isInvalidParameterException(e)) {
+      error(
+        'The eventually consistent behavior of the IAM service may cause this export to fail its first '
+                + 'attempts, please retry.'
+      );
     }
+    throw e;
+  }
 }
 
 /**
@@ -130,38 +132,38 @@ async function createExport(
  * @returns Promise which fulfills with a ExportJournalToS3Response.
  */
 export async function createExportAndWaitForCompletion(
-    ledgerName: string,
-    bucketName: string,
-    prefix: string,
-    encryptionConfig: S3EncryptionConfiguration,
-    roleArn: string,
-    qldbClient: QLDB
+  ledgerName: string,
+  bucketName: string,
+  prefix: string,
+  encryptionConfig: S3EncryptionConfiguration,
+  roleArn: string,
+  qldbClient: QLDB
 ): Promise<ExportJournalToS3Response> {
-    if (roleArn === null) {
-        roleArn = await createExportRole(EXPORT_ROLE_NAME, encryptionConfig.KmsKeyArn, ROLE_POLICY_NAME, bucketName);
-    }
-    try {
-        const exclusiveEndTime: Date = new Date();
-        const inclusiveStartTime: Date = new Date(exclusiveEndTime);
-        inclusiveStartTime.setMinutes(exclusiveEndTime.getMinutes() - 10);
+  if (roleArn === null) {
+    roleArn = await createExportRole(EXPORT_ROLE_NAME, encryptionConfig.KmsKeyArn, ROLE_POLICY_NAME, bucketName);
+  }
+  try {
+    const exclusiveEndTime: Date = new Date();
+    const inclusiveStartTime: Date = new Date(exclusiveEndTime);
+    inclusiveStartTime.setMinutes(exclusiveEndTime.getMinutes() - 10);
 
-        const result: ExportJournalToS3Response = await createExport(
-            ledgerName,
-            inclusiveStartTime,
-            exclusiveEndTime,
-            bucketName,
-            prefix,
-            encryptionConfig,
-            roleArn,
-            qldbClient
-        );
-        await waitForExportToComplete(ledgerName, result.ExportId, qldbClient);
-        log(`JournalS3Export for exportId ${result.ExportId} is completed.`);
-        return result;
-    } catch (e) {
-        error("Unable to create an export!");
-        throw e;
-    }
+    const result: ExportJournalToS3Response = await createExport(
+      ledgerName,
+      inclusiveStartTime,
+      exclusiveEndTime,
+      bucketName,
+      prefix,
+      encryptionConfig,
+      roleArn,
+      qldbClient
+    );
+    await waitForExportToComplete(ledgerName, result.ExportId, qldbClient);
+    log(`JournalS3Export for exportId ${result.ExportId} is completed.`);
+    return result;
+  } catch (e) {
+    error('Unable to create an export!');
+    throw e;
+  }
 }
 
 /**
@@ -174,51 +176,50 @@ export async function createExportAndWaitForCompletion(
  * @returns Promise which fulfills with the newly created role ARN as a string.
  */
 async function createExportRole(
-    roleName: string,
-    keyArn: string,
-    rolePolicyName: string,
-    s3BucketName: string
+  roleName: string,
+  keyArn: string,
+  rolePolicyName: string,
+  s3BucketName: string
 ): Promise<string> {
-    const iAmClient: IAM = new IAM();
-    log(`Trying to retrieve role with name: ${roleName}`);
-    let newRoleArn: string = "";
-    try {
-        const getRoleRequest: GetRoleRequest = {
-            RoleName: roleName
-        };
-        newRoleArn = (await iAmClient.getRole(getRoleRequest).promise()).Role.Arn;
-        log(`The role called ${roleName} already exists.`);
-    }
-    catch {
-        log(`The role called ${roleName} does not exist. Creating it now.`);
-        POLICY_TEMPLATE.Statement[0] = ASSUME_ROLE_POLICY_TEMPLATE;
-        const createRoleRequest: CreateRoleRequest = {
-            RoleName: roleName,
-            AssumeRolePolicyDocument: JSON.stringify(POLICY_TEMPLATE)
-        };
-        const role: CreateRoleResponse = await iAmClient.createRole(createRoleRequest).promise();
-        log(`Created a role called ${roleName}.`);
+  const iAmClient: IAM = new IAM();
+  log(`Trying to retrieve role with name: ${roleName}`);
+  let newRoleArn: string = '';
+  try {
+    const getRoleRequest: GetRoleRequest = {
+      RoleName: roleName
+    };
+    newRoleArn = (await iAmClient.getRole(getRoleRequest).promise()).Role.Arn;
+    log(`The role called ${roleName} already exists.`);
+  } catch {
+    log(`The role called ${roleName} does not exist. Creating it now.`);
+    POLICY_TEMPLATE.Statement[0] = ASSUME_ROLE_POLICY_TEMPLATE;
+    const createRoleRequest: CreateRoleRequest = {
+      RoleName: roleName,
+      AssumeRolePolicyDocument: JSON.stringify(POLICY_TEMPLATE)
+    };
+    const role: CreateRoleResponse = await iAmClient.createRole(createRoleRequest).promise();
+    log(`Created a role called ${roleName}.`);
 
-        newRoleArn = role.Role.Arn;
-        POLICY_TEMPLATE.Statement[0] = EXPORT_ROLE_S3_STATEMENT_TEMPLATE;
-        if (keyArn) {
-            POLICY_TEMPLATE.Statement[1] = EXPORT_ROLE_KMS_STATEMENT_TEMPLATE;
-        }
-        let rolePolicy: string = JSON.stringify(POLICY_TEMPLATE).replace("{kms_arn}", keyArn);
-        rolePolicy = rolePolicy.replace("{bucket_name}", s3BucketName);
-        const createPolicyRequest: CreatePolicyRequest = {
-            PolicyName: rolePolicyName,
-            PolicyDocument: rolePolicy
-        };
-        const createPolicyResult: CreatePolicyResponse = await iAmClient.createPolicy(createPolicyRequest).promise();
-        const attachRolePolicyRequest: AttachRolePolicyRequest = {
-            RoleName: roleName,
-            PolicyArn: createPolicyResult.Policy.Arn
-        };
-        await iAmClient.attachRolePolicy(attachRolePolicyRequest).promise();
-        log(`Role ${roleName} created with ARN: ${newRoleArn} and policy: ${rolePolicy}.`);
+    newRoleArn = role.Role.Arn;
+    POLICY_TEMPLATE.Statement[0] = EXPORT_ROLE_S3_STATEMENT_TEMPLATE;
+    if (keyArn) {
+      POLICY_TEMPLATE.Statement[1] = EXPORT_ROLE_KMS_STATEMENT_TEMPLATE;
     }
-    return newRoleArn;
+    let rolePolicy: string = JSON.stringify(POLICY_TEMPLATE).replace('{kms_arn}', keyArn);
+    rolePolicy = rolePolicy.replace('{bucket_name}', s3BucketName);
+    const createPolicyRequest: CreatePolicyRequest = {
+      PolicyName: rolePolicyName,
+      PolicyDocument: rolePolicy
+    };
+    const createPolicyResult: CreatePolicyResponse = await iAmClient.createPolicy(createPolicyRequest).promise();
+    const attachRolePolicyRequest: AttachRolePolicyRequest = {
+      RoleName: roleName,
+      PolicyArn: createPolicyResult.Policy.Arn
+    };
+    await iAmClient.attachRolePolicy(attachRolePolicyRequest).promise();
+    log(`Role ${roleName} created with ARN: ${newRoleArn} and policy: ${rolePolicy}.`);
+  }
+  return newRoleArn;
 }
 
 /**
@@ -228,19 +229,19 @@ async function createExportRole(
  * @returns Promise which fulfills with void.
  */
 export async function createS3BucketIfNotExists(bucketName: string, s3Client: S3): Promise<void> {
-    if (!(await doesBucketExist(bucketName, s3Client))) {
-        log(`Bucket ${bucketName} does not exist. Creating it now.`);
-        try {
-            const request: CreateBucketRequest = {
-                Bucket: bucketName
-            };
-            await s3Client.createBucket(request).promise();
-            log(`Bucket with name ${bucketName} created.`);
-        } catch (e) {
-            log(`Unable to create S3 bucket named ${bucketName}: ${e}`);
-            throw e;
-        }
+  if (!(await doesBucketExist(bucketName, s3Client))) {
+    log(`Bucket ${bucketName} does not exist. Creating it now.`);
+    try {
+      const request: CreateBucketRequest = {
+        Bucket: bucketName
+      };
+      await s3Client.createBucket(request).promise();
+      log(`Bucket with name ${bucketName} created.`);
+    } catch (e) {
+      log(`Unable to create S3 bucket named ${bucketName}: ${e}`);
+      throw e;
     }
+  }
 }
 
 /**
@@ -250,17 +251,17 @@ export async function createS3BucketIfNotExists(bucketName: string, s3Client: S3
  * @returns Promise which fulfills with whether the bucket exists or not.
  */
 async function doesBucketExist(bucketName: string, s3Client: S3): Promise<boolean> {
-    try {
-        const request: HeadBucketRequest = {
-            Bucket: bucketName
-        };
-        await s3Client.headBucket(request).promise();
-    } catch (e) {
-        if (e.code === 'NotFound') {
-            return false;
-        }
+  try {
+    const request: HeadBucketRequest = {
+      Bucket: bucketName
+    };
+    await s3Client.headBucket(request).promise();
+  } catch (e) {
+    if (e.code === 'NotFound') {
+      return false;
     }
-    return true;
+  }
+  return true;
 }
 
 /**
@@ -269,11 +270,10 @@ async function doesBucketExist(bucketName: string, s3Client: S3): Promise<boolea
  * @returns The encryption configuration for JournalS3Export.
  */
 export function setUpS3EncryptionConfiguration(kmsArn: string): S3EncryptionConfiguration {
-    if (kmsArn === null) {
-        return { ObjectEncryptionType: 'SSE_S3' };
-    } else {
-        return { ObjectEncryptionType: 'SSE_KMS', KmsKeyArn: kmsArn };
-    }
+  if (kmsArn === null) {
+    return { ObjectEncryptionType: 'SSE_S3' };
+  }
+  return { ObjectEncryptionType: 'SSE_KMS', KmsKeyArn: kmsArn };
 }
 
 /**
@@ -285,24 +285,23 @@ export function setUpS3EncryptionConfiguration(kmsArn: string): S3EncryptionConf
  * @throws Error: When the export fails to complete within a constant number of retries.
  */
 async function waitForExportToComplete(
-    ledgerName: string, 
-    exportId: string,
-    qldbClient: QLDB
+  ledgerName: string,
+  exportId: string,
+  qldbClient: QLDB
 ): Promise<JournalS3ExportDescription> {
-    log(`Waiting for JournalS3Export for ${exportId} to complete...`);
-    let count: number = 0;
-    while (count < MAX_RETRY_COUNT) {
-        const exportDescription: JournalS3ExportDescription =
-            (await describeJournalExport(ledgerName, exportId, qldbClient)).ExportDescription;
-        if (exportDescription.Status === 'COMPLETED') {
-            log("JournalS3Export completed.");
-            return exportDescription;
-        }
-        log("JournalS3Export is still in progress. Please wait.");
-        await sleep(EXPORT_COMPLETION_POLL_PERIOD_MS);
-        count += 1;
+  log(`Waiting for JournalS3Export for ${exportId} to complete...`);
+  let count: number = 0;
+  while (count < MAX_RETRY_COUNT) {
+    const exportDescription: JournalS3ExportDescription = (await describeJournalExport(ledgerName, exportId, qldbClient)).ExportDescription;
+    if (exportDescription.Status === 'COMPLETED') {
+      log('JournalS3Export completed.');
+      return exportDescription;
     }
-    throw new Error(`Journal Export did not complete for ${exportId}.`);
+    log('JournalS3Export is still in progress. Please wait.');
+    await sleep(EXPORT_COMPLETION_POLL_PERIOD_MS);
+    count += 1;
+  }
+  throw new Error(`Journal Export did not complete for ${exportId}.`);
 }
 
 /**
@@ -351,44 +350,44 @@ async function waitForExportToComplete(
  * https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    try {
-        const s3Client: S3 = new S3();
-        const sts: STS = new STS();
-        const qldbClient: QLDB = new QLDB();
+const main = async function (): Promise<void> {
+  try {
+    const s3Client: S3 = new S3();
+    const sts: STS = new STS();
+    const qldbClient: QLDB = new QLDB();
 
-        let s3BucketName: string = null;
-        let kmsArn: string = null;
-        let roleArn: string = null;
+    let s3BucketName: string = null;
+    let kmsArn: string = null;
+    let roleArn: string = null;
 
-        if (process.argv.length >= 3) {
-            s3BucketName = process.argv[2].toString();
-            if (process.argv.length >= 4) {
-                roleArn = process.argv[3].toString();
-            }
-            if (process.argv.length === 5) {
-                kmsArn = process.argv[4].toString();
-            }
-        } else {
-            const request: GetCallerIdentityRequest = {};
-            const identity: GetCallerIdentityResponse = await sts.getCallerIdentity(request).promise();
-            s3BucketName = `${JOURNAL_EXPORT_S3_BUCKET_NAME_PREFIX}-${identity.Account}`;
-        }
-        await createS3BucketIfNotExists(s3BucketName, s3Client);
-        const s3EncryptionConfig: S3EncryptionConfiguration = setUpS3EncryptionConfiguration(kmsArn);
-        const exportResult: ExportJournalToS3Response = await createExportAndWaitForCompletion(
-            LEDGER_NAME,
-            s3BucketName,
-            LEDGER_NAME + "/",
-            s3EncryptionConfig,
-            roleArn,
-            qldbClient
-        );
-    } catch (e) {
-        error(`Unable to create an export: ${e}`);
+    if (process.argv.length >= 3) {
+      s3BucketName = process.argv[2].toString();
+      if (process.argv.length >= 4) {
+        roleArn = process.argv[3].toString();
+      }
+      if (process.argv.length === 5) {
+        kmsArn = process.argv[4].toString();
+      }
+    } else {
+      const request: GetCallerIdentityRequest = {};
+      const identity: GetCallerIdentityResponse = await sts.getCallerIdentity(request).promise();
+      s3BucketName = `${JOURNAL_EXPORT_S3_BUCKET_NAME_PREFIX}-${identity.Account}`;
     }
-}
+    await createS3BucketIfNotExists(s3BucketName, s3Client);
+    const s3EncryptionConfig: S3EncryptionConfiguration = setUpS3EncryptionConfiguration(kmsArn);
+    const exportResult: ExportJournalToS3Response = await createExportAndWaitForCompletion(
+      LEDGER_NAME,
+      s3BucketName,
+      `${LEDGER_NAME}/`,
+      s3EncryptionConfig,
+      roleArn,
+      qldbClient
+    );
+  } catch (e) {
+    error(`Unable to create an export: ${e}`);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

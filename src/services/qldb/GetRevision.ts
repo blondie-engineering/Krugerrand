@@ -16,20 +16,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { createQldbWriter, QldbSession, QldbWriter, TransactionExecutor } from "amazon-qldb-driver-nodejs";
-import { QLDB } from "aws-sdk";
-import { Digest, GetDigestResponse, GetRevisionRequest, GetRevisionResponse, ValueHolder } from "aws-sdk/clients/qldb";
-import { makeReader, Reader, toBase64 } from "ion-js";
+import {
+  createQldbWriter, QldbSession, QldbWriter, TransactionExecutor
+} from 'amazon-qldb-driver-nodejs';
+import { QLDB } from 'aws-sdk';
+import {
+  Digest, GetDigestResponse, GetRevisionRequest, GetRevisionResponse, ValueHolder
+} from 'aws-sdk/clients/qldb';
+import { makeReader, Reader, toBase64 } from 'ion-js';
 
-import { closeQldbSession, createQldbSession } from "./ConnectToLedger";
+import { Request, Response, RequestHandler } from 'express';
+import { closeQldbSession, createQldbSession } from './ConnectToLedger';
 import { getDigestResult } from './GetDigest';
-import { AD_DATA_TRANSACTIONS } from "./model/SampleData"
+import { AD_DATA_TRANSACTIONS } from './model/SampleData';
 import { blockAddressToValueHolder, getMetadataId } from './qldb/BlockAddress';
 import { LEDGER_NAME } from './qldb/Constants';
-import { error, log } from "./qldb/LogUtil";
-import { getFieldValue, valueHolderToString, writeValueAsIon } from "./qldb/Util";
-import { flipRandomBit, verifyDocument } from "./qldb/Verifier";
-import { Request, Response, RequestHandler } from 'express';
+import { error, log } from './qldb/LogUtil';
+import { getFieldValue, valueHolderToString, writeValueAsIon } from './qldb/Util';
+import { flipRandomBit, verifyDocument } from './qldb/Verifier';
 
 /**
  * Get the revision data object for a specified document ID and block address.
@@ -42,20 +46,20 @@ import { Request, Response, RequestHandler } from 'express';
  * @returns Promise which fulfills with a GetRevisionResponse.
  */
 async function getRevision(
-    ledgerName: string,
-    documentId: string,
-    blockAddress: ValueHolder,
-    digestTipAddress: ValueHolder,
-    qldbClient: QLDB
+  ledgerName: string,
+  documentId: string,
+  blockAddress: ValueHolder,
+  digestTipAddress: ValueHolder,
+  qldbClient: QLDB
 ): Promise<GetRevisionResponse> {
-    const request: GetRevisionRequest = {
-        Name: ledgerName,
-        BlockAddress: blockAddress,
-        DocumentId: documentId,
-        DigestTipAddress: digestTipAddress
-    };
-    const result: GetRevisionResponse = await qldbClient.getRevision(request).promise();
-    return result;
+  const request: GetRevisionRequest = {
+    Name: ledgerName,
+    BlockAddress: blockAddress,
+    DocumentId: documentId,
+    DigestTipAddress: digestTipAddress
+  };
+  const result: GetRevisionResponse = await qldbClient.getRevision(request).promise();
+  return result;
 }
 
 /**
@@ -65,20 +69,20 @@ async function getRevision(
  * @returns Promise which fulfills with a list of Readers that contains the results of the query.
  */
 export async function lookupRegistrationForCompany(txn: TransactionExecutor, id: string): Promise<Reader[]> {
-    log(`Querying the 'AdData' table for id: ${id}...`);
-    let resultList: Reader[];
-    const query: string = "SELECT blockAddress, metadata.id FROM _ql_committed_AdData WHERE metadata.id = ?";
+  log(`Querying the 'AdData' table for id: ${id}...`);
+  let resultList: Reader[];
+  const query: string = 'SELECT blockAddress, metadata.id FROM _ql_committed_AdData WHERE metadata.id = ?';
 
-    const qldbWriter: QldbWriter = createQldbWriter();
-    writeValueAsIon(id, qldbWriter);
+  const qldbWriter: QldbWriter = createQldbWriter();
+  writeValueAsIon(id, qldbWriter);
 
-    await txn.executeInline(query, [qldbWriter]).then(function(result) {
-      resultList = result.getResultList();
-    });
-    if(!resultList.length) {
-      throw "No such row";
-    }
-    return resultList;
+  await txn.executeInline(query, [qldbWriter]).then((result) => {
+    resultList = result.getResultList();
+  });
+  if (!resultList.length) {
+    throw 'No such row';
+  }
+  return resultList;
 }
 
 /**
@@ -91,110 +95,110 @@ export async function lookupRegistrationForCompany(txn: TransactionExecutor, id:
  * @throws Error: When verification fails.
  */
 export async function verifyRegistration(
-    txn: TransactionExecutor,
-    ledgerName: string,
-    id: string,
-    qldbClient: QLDB
+  txn: TransactionExecutor,
+  ledgerName: string,
+  id: string,
+  qldbClient: QLDB
 ): Promise<Boolean> {
-    log(`Let's verify the adData with id = ${id}, in ledger = ${ledgerName}.`);
-    const digest: GetDigestResponse = await getDigestResult(ledgerName, qldbClient);
-    const digestBytes: Digest = digest.Digest;
-    const digestTipAddress: ValueHolder = digest.DigestTipAddress;
+  log(`Let's verify the adData with id = ${id}, in ledger = ${ledgerName}.`);
+  const digest: GetDigestResponse = await getDigestResult(ledgerName, qldbClient);
+  const digestBytes: Digest = digest.Digest;
+  const digestTipAddress: ValueHolder = digest.DigestTipAddress;
 
-    log(
-        `Got a ledger digest: digest tip address = \n${valueHolderToString(digestTipAddress)},
+  log(
+    `Got a ledger digest: digest tip address = \n${valueHolderToString(digestTipAddress)},
         digest = \n${toBase64(<Uint8Array> digestBytes)}.`
+  );
+  log(`Querying the Adata form = ${id} to verify each version of the adData...`);
+  const resultList: Reader[] = await lookupRegistrationForCompany(txn, id);
+  log('Getting a proof for the document.');
+
+  for (const result of resultList) {
+    const blockAddress: ValueHolder = blockAddressToValueHolder(result);
+    const documentId: string = getMetadataId(result);
+
+    const revisionResponse: GetRevisionResponse = await getRevision(
+      ledgerName,
+      documentId,
+      blockAddress,
+      digestTipAddress,
+      qldbClient
     );
-    log(`Querying the Adata form = ${id} to verify each version of the adData...`);
-    const resultList: Reader[] = await lookupRegistrationForCompany(txn, id);
-    log("Getting a proof for the document.");
 
-    for (const result of resultList) {
-        const blockAddress: ValueHolder =  blockAddressToValueHolder(result);
-        const documentId: string = getMetadataId(result);
+    const revision: string = revisionResponse.Revision.IonText;
+    const revisionReader: Reader = makeReader(revision);
 
-        const revisionResponse: GetRevisionResponse = await getRevision(
-            ledgerName,
-            documentId,
-            blockAddress,
-            digestTipAddress,
-            qldbClient
-        );
+    const documentHash: Uint8Array = getFieldValue(revisionReader, ['hash']);
+    const proof: ValueHolder = revisionResponse.Proof;
+    log(`Got back a proof: ${valueHolderToString(proof)}.`);
 
-        const revision: string = revisionResponse.Revision.IonText;
-        const revisionReader: Reader = makeReader(revision);
-
-        const documentHash: Uint8Array = getFieldValue(revisionReader, ["hash"]);
-        const proof: ValueHolder = revisionResponse.Proof;
-        log(`Got back a proof: ${valueHolderToString(proof)}.`);
-
-        let verified: boolean = verifyDocument(documentHash, digestBytes, proof);
-        return verified;
-        // if (!verified) {
-        //    throw new Error("Document revision is not verified.");
-        // } else {
-        //     log("Success! The document is verified.");
-        // }
-        // const alteredDocumentHash: Uint8Array = flipRandomBit(documentHash);
-        //
-        // log(
-        //     `Flipping one bit in the document's hash and assert that the document is NOT verified.
-        //     The altered document hash is: ${toBase64(alteredDocumentHash)}`
-        // );
-        // verified = verifyDocument(alteredDocumentHash, digestBytes, proof);
-        //
-        // if (verified) {
-        //     throw new Error("Expected altered document hash to not be verified against digest.");
-        // } else {
-        //     log("Success! As expected flipping a bit in the document hash causes verification to fail.");
-        // }
-        // log(`Finished verifying the registration with VIN = ${company} in ledger = ${ledgerName}.`);
-    }
+    const verified: boolean = verifyDocument(documentHash, digestBytes, proof);
+    return verified;
+    // if (!verified) {
+    //    throw new Error("Document revision is not verified.");
+    // } else {
+    //     log("Success! The document is verified.");
+    // }
+    // const alteredDocumentHash: Uint8Array = flipRandomBit(documentHash);
+    //
+    // log(
+    //     `Flipping one bit in the document's hash and assert that the document is NOT verified.
+    //     The altered document hash is: ${toBase64(alteredDocumentHash)}`
+    // );
+    // verified = verifyDocument(alteredDocumentHash, digestBytes, proof);
+    //
+    // if (verified) {
+    //     throw new Error("Expected altered document hash to not be verified against digest.");
+    // } else {
+    //     log("Success! As expected flipping a bit in the document hash causes verification to fail.");
+    // }
+    // log(`Finished verifying the registration with VIN = ${company} in ledger = ${ledgerName}.`);
+  }
 }
 
 export const verifyTransactionHandler: RequestHandler = async (req: Request, res: Response) => {
   let session: QldbSession;
   try {
-      const qldbClient: QLDB = new QLDB();
-      session = await createQldbSession();
+    const qldbClient: QLDB = new QLDB();
+    session = await createQldbSession();
 
-      await session.executeLambda(async (txn) => {
-          const isVerified = await verifyRegistration(txn, LEDGER_NAME, req.query.id, qldbClient);
-          res.setHeader('Content-Type', 'application/json');
-          res.json({
-            message: isVerified ? 'Verified' : 'Hacked'
-          }).status(200);
-      });
-  } catch(err) {
-      res.sendStatus(err.statusCode);
+    await session.executeLambda(async (txn) => {
+      const isVerified = await verifyRegistration(txn, LEDGER_NAME, req.query.id, qldbClient);
+      res.setHeader('Content-Type', 'application/json');
+      res.json({
+        message: isVerified ? 'Verified' : 'Hacked'
+      }).status(200);
+    });
+  } catch (err) {
+    res.sendStatus(err.statusCode);
   } finally {
-      closeQldbSession(session);
+    closeQldbSession(session);
   }
-}
+};
 
 /**
  * Verify the integrity of a document revision in a QLDB ledger.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    let session: QldbSession;
-    try {
-        const qldbClient: QLDB = new QLDB();
-        session = await createQldbSession();
+const main = async function (): Promise<void> {
+  let session: QldbSession;
+  try {
+    const qldbClient: QLDB = new QLDB();
+    session = await createQldbSession();
 
-        const registration = AD_DATA_TRANSACTIONS[0];
-        const company: string = registration.company;
+    const registration = AD_DATA_TRANSACTIONS[0];
+    const { company } = registration;
 
-        await session.executeLambda(async (txn) => {
-            await verifyRegistration(txn, LEDGER_NAME, company, qldbClient);
-        });
-    } catch (e) {
-        error(`Unable to verify revision: ${e}`);
-    } finally {
-        closeQldbSession(session);
-    }
-}
+    await session.executeLambda(async (txn) => {
+      await verifyRegistration(txn, LEDGER_NAME, company, qldbClient);
+    });
+  } catch (e) {
+    error(`Unable to verify revision: ${e}`);
+  } finally {
+    closeQldbSession(session);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

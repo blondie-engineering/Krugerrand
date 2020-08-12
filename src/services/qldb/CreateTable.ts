@@ -16,14 +16,14 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QldbSession, Result, TransactionExecutor } from "amazon-qldb-driver-nodejs";
+import { QldbSession, Result, TransactionExecutor } from 'amazon-qldb-driver-nodejs';
 import { Request, Response, RequestHandler } from 'express';
 
-import { closeQldbSession, createQldbSession } from "./ConnectToLedger";
+import { closeQldbSession, createQldbSession } from './ConnectToLedger';
 import {
-    AD_DATA_TABLE_NAME
-} from "./qldb/Constants";
-import { error, log } from "./qldb/LogUtil";
+  AD_DATA_TABLE_NAME
+} from './qldb/Constants';
+import { error, log } from './qldb/LogUtil';
 
 /**
  * Create multiple tables in a single transaction.
@@ -32,51 +32,50 @@ import { error, log } from "./qldb/LogUtil";
  * @returns Promise which fulfills with the number of changes to the database.
  */
 export async function createTable(txn: TransactionExecutor, tableName: string): Promise<number> {
-    const statement: string = `CREATE TABLE ${tableName}`;
-    return await txn.executeInline(statement).then((result: Result) => {
-        log(`Successfully created table ${tableName}.`);
-        return result.getResultList().length;
-    });
+  const statement: string = `CREATE TABLE ${tableName}`;
+  return await txn.executeInline(statement).then((result: Result) => {
+    log(`Successfully created table ${tableName}.`);
+    return result.getResultList().length;
+  });
 }
 
 export const createTables: RequestHandler = async (req: Request, res: Response) => {
-
   let session: QldbSession;
   try {
-      session = await createQldbSession();
-      await session.executeLambda(async (txn) => {
-          Promise.all([
-              createTable(txn, AD_DATA_TABLE_NAME)
-          ]);
-      }, () => log("Retrying due to OCC conflict..."));
-      res.send({
-        message: "Successful tableCreations connection"
-      }).status(200);
+    session = await createQldbSession();
+    await session.executeLambda(async (txn) => {
+      Promise.all([
+        createTable(txn, AD_DATA_TABLE_NAME)
+      ]);
+    }, () => log('Retrying due to OCC conflict...'));
+    res.send({
+      message: 'Successful tableCreations connection'
+    }).status(200);
   } finally {
-      closeQldbSession(session);
+    closeQldbSession(session);
   }
-}
+};
 
 /**
  * Create tables in a QLDB ledger.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    let session: QldbSession;
-    try {
-        session = await createQldbSession();
-        await session.executeLambda(async (txn) => {
-            Promise.all([
-                createTable(txn, AD_DATA_TABLE_NAME)
-            ]);
-        }, () => log("Retrying due to OCC conflict..."));
-    } catch (e) {
-        error(`Unable to create tables: ${e}`);
-    } finally {
-        closeQldbSession(session);
-    }
-}
+const main = async function (): Promise<void> {
+  let session: QldbSession;
+  try {
+    session = await createQldbSession();
+    await session.executeLambda(async (txn) => {
+      Promise.all([
+        createTable(txn, AD_DATA_TABLE_NAME)
+      ]);
+    }, () => log('Retrying due to OCC conflict...'));
+  } catch (e) {
+    error(`Unable to create tables: ${e}`);
+  } finally {
+    closeQldbSession(session);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

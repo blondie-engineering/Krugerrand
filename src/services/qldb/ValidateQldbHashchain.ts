@@ -16,23 +16,23 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { QLDB, S3, STS } from "aws-sdk";
-import { JournalS3ExportDescription } from "aws-sdk/clients/qldb";
-import { GetCallerIdentityRequest, GetCallerIdentityResponse } from "aws-sdk/clients/sts";
-import { toBase64 } from "ion-js";
-import { format } from "util";
+import { QLDB, S3, STS } from 'aws-sdk';
+import { JournalS3ExportDescription } from 'aws-sdk/clients/qldb';
+import { GetCallerIdentityRequest, GetCallerIdentityResponse } from 'aws-sdk/clients/sts';
+import { toBase64 } from 'ion-js';
+import { format } from 'util';
 
 import { describeJournalExport } from './DescribeJournalExport';
 import {
-    createExportAndWaitForCompletion,
-    createS3BucketIfNotExists,
-    setUpS3EncryptionConfiguration
-} from "./ExportJournal";
+  createExportAndWaitForCompletion,
+  createS3BucketIfNotExists,
+  setUpS3EncryptionConfiguration
+} from './ExportJournal';
 import { JOURNAL_EXPORT_S3_BUCKET_NAME_PREFIX, LEDGER_NAME } from './qldb/Constants';
-import { JournalBlock } from "./qldb/JournalBlock";
-import { readExport } from "./qldb/JournalS3ExportReader";
-import { error, log } from "./qldb/LogUtil";
-import { joinHashesPairwise } from "./qldb/Verifier";
+import { JournalBlock } from './qldb/JournalBlock';
+import { readExport } from './qldb/JournalS3ExportReader';
+import { error, log } from './qldb/LogUtil';
+import { joinHashesPairwise } from './qldb/Verifier';
 
 const s3Client: S3 = new S3();
 
@@ -43,17 +43,17 @@ const s3Client: S3 = new S3();
  * @returns The current journal block in the chain.
  */
 function compareJournalBlocks(previousJournalBlock: JournalBlock, journalBlock: JournalBlock): JournalBlock {
-    if (previousJournalBlock === undefined) {
-        return journalBlock;
-    }
-    if (toBase64(previousJournalBlock._blockHash) !== toBase64(journalBlock._previousBlockHash)) {
-        throw new Error("Previous block hash does not match!");
-    }
-    const blockHash: Uint8Array = joinHashesPairwise(journalBlock._entriesHash, previousJournalBlock._blockHash);
-    if (toBase64(blockHash) !== toBase64(journalBlock._blockHash)) {
-        throw new Error("Block hash doesn't match expected block hash. Verification failed.");
-    }
+  if (previousJournalBlock === undefined) {
     return journalBlock;
+  }
+  if (toBase64(previousJournalBlock._blockHash) !== toBase64(journalBlock._previousBlockHash)) {
+    throw new Error('Previous block hash does not match!');
+  }
+  const blockHash: Uint8Array = joinHashesPairwise(journalBlock._entriesHash, previousJournalBlock._blockHash);
+  if (toBase64(blockHash) !== toBase64(journalBlock._blockHash)) {
+    throw new Error('Block hash doesn\'t match expected block hash. Verification failed.');
+  }
+  return journalBlock;
 }
 
 /**
@@ -62,24 +62,24 @@ function compareJournalBlocks(previousJournalBlock: JournalBlock, journalBlock: 
  * @returns The ExportId for the journal export.
  */
 async function createJournalExport(qldbClient: QLDB): Promise<string> {
-    const sts: STS = new STS();
-    const request: GetCallerIdentityRequest = {};
-    const identity: GetCallerIdentityResponse = await sts.getCallerIdentity(request).promise();
+  const sts: STS = new STS();
+  const request: GetCallerIdentityRequest = {};
+  const identity: GetCallerIdentityResponse = await sts.getCallerIdentity(request).promise();
 
-    const bucketName: string = format('%s-%s', JOURNAL_EXPORT_S3_BUCKET_NAME_PREFIX, identity.Account);
-    const prefix: string = format('%s-%s', LEDGER_NAME, Date.now().toString());
+  const bucketName: string = format('%s-%s', JOURNAL_EXPORT_S3_BUCKET_NAME_PREFIX, identity.Account);
+  const prefix: string = format('%s-%s', LEDGER_NAME, Date.now().toString());
 
-    await createS3BucketIfNotExists(bucketName, s3Client);
+  await createS3BucketIfNotExists(bucketName, s3Client);
 
-    const exportJournalToS3Result = await createExportAndWaitForCompletion(
-        LEDGER_NAME,
-        bucketName,
-        prefix,
-        setUpS3EncryptionConfiguration(null),
-        null,
-        qldbClient
-    );
-    return exportJournalToS3Result.ExportId;
+  const exportJournalToS3Result = await createExportAndWaitForCompletion(
+    LEDGER_NAME,
+    bucketName,
+    prefix,
+    setUpS3EncryptionConfiguration(null),
+    null,
+    qldbClient
+  );
+  return exportJournalToS3Result.ExportId;
 }
 
 /**
@@ -88,10 +88,10 @@ async function createJournalExport(qldbClient: QLDB): Promise<string> {
  * @returns None if the given list of journal blocks is empty.
  */
 function verify(journalBlocks: JournalBlock[]): void {
-    if (journalBlocks.length === 0) {
-        return;
-    }
-    journalBlocks.reduce(compareJournalBlocks);
+  if (journalBlocks.length === 0) {
+    return;
+  }
+  journalBlocks.reduce(compareJournalBlocks);
 }
 
 /**
@@ -101,26 +101,25 @@ function verify(journalBlocks: JournalBlock[]): void {
  * chain validation.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    try {
-        const qldbClient = new QLDB();
-        let exportId: string;
-        if (process.argv.length === 3) {
-            exportId = process.argv[2].toString();
-            log(`Validating QLDB hash chain for ExportId: ${exportId}.`);
-        } else {
-            log("Requesting QLDB to create an export.");
-            exportId = await createJournalExport(qldbClient);
-        }
-        const journalExport: JournalS3ExportDescription =
-            (await describeJournalExport(LEDGER_NAME, exportId, qldbClient)).ExportDescription;
-        const journalBlocks: JournalBlock[] = await readExport(journalExport, s3Client);
-        verify(journalBlocks);
-    } catch (e) {
-        error(`Unable to perform hash chain verification: ${e}`);
+const main = async function (): Promise<void> {
+  try {
+    const qldbClient = new QLDB();
+    let exportId: string;
+    if (process.argv.length === 3) {
+      exportId = process.argv[2].toString();
+      log(`Validating QLDB hash chain for ExportId: ${exportId}.`);
+    } else {
+      log('Requesting QLDB to create an export.');
+      exportId = await createJournalExport(qldbClient);
     }
-}
+    const journalExport: JournalS3ExportDescription = (await describeJournalExport(LEDGER_NAME, exportId, qldbClient)).ExportDescription;
+    const journalBlocks: JournalBlock[] = await readExport(journalExport, s3Client);
+    verify(journalBlocks);
+  } catch (e) {
+    error(`Unable to perform hash chain verification: ${e}`);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

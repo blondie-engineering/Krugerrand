@@ -16,16 +16,17 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import { ValueHolder } from "aws-sdk/clients/qldb";
-import { Reader } from "ion-js";
+import { ValueHolder } from 'aws-sdk/clients/qldb';
+import { Reader } from 'ion-js';
 
 export class BlockAddress {
     _strandId: string;
+
     _sequenceNo: number;
 
     constructor(strandId: string, sequenceNo: number) {
-        this._strandId = strandId;
-        this._sequenceNo = sequenceNo;
+      this._strandId = strandId;
+      this._sequenceNo = sequenceNo;
     }
 }
 
@@ -36,11 +37,11 @@ export class BlockAddress {
  * @returns The ValueHolder that contains the strandId and sequenceNo.
  */
 export function blockAddressToValueHolder(reader: Reader): ValueHolder {
-    const strandId: string = getStrandId(reader);
-    const sequenceNo: number = getSequenceNo(reader);
-    const valueHolder: string = `{strandId: "${strandId}", sequenceNo: ${sequenceNo}}`;
-    const blockAddress: ValueHolder = {IonText: valueHolder};
-    return blockAddress;
+  const strandId: string = getStrandId(reader);
+  const sequenceNo: number = getSequenceNo(reader);
+  const valueHolder: string = `{strandId: "${strandId}", sequenceNo: ${sequenceNo}}`;
+  const blockAddress: ValueHolder = { IonText: valueHolder };
+  return blockAddress;
 }
 
 /**
@@ -49,9 +50,9 @@ export function blockAddressToValueHolder(reader: Reader): ValueHolder {
  * @returns The Metadata ID.
  */
 export function getMetadataId(reader: Reader): string {
-    reader.stepOut();
-    reader.next();
-    return reader.stringValue();
+  reader.stepOut();
+  reader.next();
+  return reader.stringValue();
 }
 
 /**
@@ -60,12 +61,12 @@ export function getMetadataId(reader: Reader): string {
  * @returns The Sequence No.
  */
 export function getSequenceNo(reader: Reader): number {
-    reader.next();
-    const fieldName: string = reader.fieldName();
-    if (fieldName !== "sequenceNo") {
-        throw new Error(`Expected field name sequenceNo, found ${fieldName}.`);
-    }
-    return reader.numberValue();
+  reader.next();
+  const fieldName: string = reader.fieldName();
+  if (fieldName !== 'sequenceNo') {
+    throw new Error(`Expected field name sequenceNo, found ${fieldName}.`);
+  }
+  return reader.numberValue();
 }
 
 /**
@@ -74,17 +75,17 @@ export function getSequenceNo(reader: Reader): number {
  * @returns The Strand ID.
  */
 export function getStrandId(reader: Reader): string {
-    reader.next();
-    reader.stepIn();
-    const type = reader.next();
-    if (type.name !== "struct") {
-        throw new Error(`Unexpected format: expected struct, but got IonType: ${type.name}`);
-    }
-    reader.stepIn();
-    reader.next();
-    const fieldName: string = reader.fieldName();
-    if (fieldName !== "strandId") {
-        throw new Error(`Expected field name strandId, found ${fieldName}.`);
-    }
-    return reader.stringValue();
+  reader.next();
+  reader.stepIn();
+  const type = reader.next();
+  if (type.name !== 'struct') {
+    throw new Error(`Unexpected format: expected struct, but got IonType: ${type.name}`);
+  }
+  reader.stepIn();
+  reader.next();
+  const fieldName: string = reader.fieldName();
+  if (fieldName !== 'strandId') {
+    throw new Error(`Expected field name strandId, found ${fieldName}.`);
+  }
+  return reader.stringValue();
 }

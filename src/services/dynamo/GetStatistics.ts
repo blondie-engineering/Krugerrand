@@ -2,15 +2,14 @@ import { Request, Response, RequestHandler } from 'express';
 import { createDbClient } from './CreateDbClient';
 
 const TABLE_NAME = 'Statistics';
-var params = {
+const params = {
   TableName: 'Statistics',
   Item: {
-    'storage' : {S: 'put'},
-    'operation_type' : {S: 'qldb'},
-    'time': {S: '100'}
+    storage: { S: 'put' },
+    operation_type: { S: 'qldb' },
+    time: { S: '100' }
   }
 };
-
 
 
 export const getStatistics: RequestHandler = async (req: Request, res: Response) => {
@@ -19,7 +18,7 @@ export const getStatistics: RequestHandler = async (req: Request, res: Response)
     const params = {
       TableName: TABLE_NAME
     };
-    dbClient.scan(params, function(err: any, data: any) {
+    dbClient.scan(params, (err: any, data: any) => {
       if (err) {
         res.status(500).send(err);
       } else {
@@ -29,4 +28,4 @@ export const getStatistics: RequestHandler = async (req: Request, res: Response)
   } catch (e) {
     res.status(500).send(e);
   }
-}
+};

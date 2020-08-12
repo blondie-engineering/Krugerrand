@@ -16,20 +16,20 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 import { Request, Response, RequestHandler } from 'express';
-import { QLDB } from "aws-sdk";
+import { QLDB } from 'aws-sdk';
 import {
-    CreateLedgerRequest,
-    CreateLedgerResponse,
-    DescribeLedgerRequest,
-    DescribeLedgerResponse
-} from "aws-sdk/clients/qldb";
+  CreateLedgerRequest,
+  CreateLedgerResponse,
+  DescribeLedgerRequest,
+  DescribeLedgerResponse
+} from 'aws-sdk/clients/qldb';
 
-import { LEDGER_NAME } from "./qldb/Constants";
-import { error, log } from "./qldb/LogUtil";
-import { sleep } from "./qldb/Util";
+import { LEDGER_NAME } from './qldb/Constants';
+import { error, log } from './qldb/LogUtil';
+import { sleep } from './qldb/Util';
 
 const LEDGER_CREATION_POLL_PERIOD_MS = 10000;
-const ACTIVE_STATE = "ACTIVE";
+const ACTIVE_STATE = 'ACTIVE';
 
 /**
  * Create a new ledger with the specified name.
@@ -38,14 +38,14 @@ const ACTIVE_STATE = "ACTIVE";
  * @returns Promise which fulfills with a CreateLedgerResponse.
  */
 export async function createLedger(ledgerName: string, qldbClient: QLDB): Promise<CreateLedgerResponse> {
-    log(`Creating a ledger named: ${ledgerName}...`);
-    const request: CreateLedgerRequest = {
-        Name: ledgerName,
-        PermissionsMode: "ALLOW_ALL"
-    }
-    const result: CreateLedgerResponse = await qldbClient.createLedger(request).promise();
-    log(`Success. Ledger state: ${result.State}.`);
-    return result;
+  log(`Creating a ledger named: ${ledgerName}...`);
+  const request: CreateLedgerRequest = {
+    Name: ledgerName,
+    PermissionsMode: 'ALLOW_ALL'
+  };
+  const result: CreateLedgerResponse = await qldbClient.createLedger(request).promise();
+  log(`Success. Ledger state: ${result.State}.`);
+  return result;
 }
 
 /**
@@ -55,49 +55,49 @@ export async function createLedger(ledgerName: string, qldbClient: QLDB): Promis
  * @returns Promise which fulfills with a DescribeLedgerResponse.
  */
 export async function waitForActive(ledgerName: string, qldbClient: QLDB): Promise<DescribeLedgerResponse> {
-    log(`Waiting for ledger ${ledgerName} to become active...`);
-    const request: DescribeLedgerRequest = {
-        Name: ledgerName
+  log(`Waiting for ledger ${ledgerName} to become active...`);
+  const request: DescribeLedgerRequest = {
+    Name: ledgerName
+  };
+  while (true) {
+    const result: DescribeLedgerResponse = await qldbClient.describeLedger(request).promise();
+    if (result.State === ACTIVE_STATE) {
+      log('Success. Ledger is active and ready to be used.');
+      return result;
     }
-    while (true) {
-        const result: DescribeLedgerResponse = await qldbClient.describeLedger(request).promise();
-        if (result.State === ACTIVE_STATE) {
-            log("Success. Ledger is active and ready to be used.");
-            return result;
-        }
-        log("The ledger is still creating. Please wait...");
-        await sleep(LEDGER_CREATION_POLL_PERIOD_MS);
-    }
+    log('The ledger is still creating. Please wait...');
+    await sleep(LEDGER_CREATION_POLL_PERIOD_MS);
+  }
 }
 
 export const requestLedger: RequestHandler = async (req: Request, res: Response) => {
   try {
-      const qldbClient: QLDB = new QLDB();
-      await createLedger(LEDGER_NAME, qldbClient);
-      await waitForActive(LEDGER_NAME, qldbClient);
-      res.send({
-        message: "Successful ledger creation"
-      }).status(200);
+    const qldbClient: QLDB = new QLDB();
+    await createLedger(LEDGER_NAME, qldbClient);
+    await waitForActive(LEDGER_NAME, qldbClient);
+    res.send({
+      message: 'Successful ledger creation'
+    }).status(200);
   } catch (e) {
-      throw e;
+    throw e;
   }
-}
+};
 
 
 /**
  * Create a ledger and wait for it to be active.
  * @returns Promise which fulfills with void.
  */
-var main = async function(): Promise<void> {
-    try {
-        const qldbClient: QLDB = new QLDB();
-        await createLedger(LEDGER_NAME, qldbClient);
-        await waitForActive(LEDGER_NAME, qldbClient);
-    } catch (e) {
-        error(`Unable to create the ledger: ${e}`);
-    }
-}
+const main = async function (): Promise<void> {
+  try {
+    const qldbClient: QLDB = new QLDB();
+    await createLedger(LEDGER_NAME, qldbClient);
+    await waitForActive(LEDGER_NAME, qldbClient);
+  } catch (e) {
+    error(`Unable to create the ledger: ${e}`);
+  }
+};
 
 if (require.main === module) {
-    main();
+  main();
 }

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import * as QldbController from '../../controllers/qldb'
+import * as QldbController from '../../controllers/qldb';
 
 const router: Router = Router();
 
